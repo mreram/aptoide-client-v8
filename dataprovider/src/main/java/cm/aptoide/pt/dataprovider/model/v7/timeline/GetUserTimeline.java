@@ -5,9 +5,13 @@
 
 package cm.aptoide.pt.dataprovider.model.v7.timeline;
 
-import cm.aptoide.pt.dataprovider.model.v7.BaseV7EndlessDataListResponse;
+import cm.aptoide.pt.dataprovider.model.v7.BaseV7EndlessTimelineDataListResponse;
 
-public class GetUserTimeline extends BaseV7EndlessDataListResponse<TimelineItem<TimelineCard>> {
+public class GetUserTimeline
+    extends BaseV7EndlessTimelineDataListResponse<TimelineItem<TimelineCard>> {
+
+  public GetUserTimeline() {
+  }
 
   public int hashCode() {
     final int PRIME = 59;

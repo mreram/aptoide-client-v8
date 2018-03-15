@@ -17,7 +17,6 @@ import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.downloadmanager.DownloadNotFoundException;
 import cm.aptoide.pt.install.installer.DefaultInstaller;
 import cm.aptoide.pt.install.installer.InstallationState;
-import cm.aptoide.pt.install.installer.RollbackInstaller;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.preferences.secure.SecurePreferences;
 import cm.aptoide.pt.repository.DownloadRepository;
@@ -79,10 +78,6 @@ public class InstallManager {
     intent.setAction(InstallService.ACTION_STOP_INSTALL);
     intent.putExtra(InstallService.EXTRA_INSTALLATION_MD5, md5);
     context.startService(intent);
-  }
-
-  public Completable uninstall(String packageName, String versionName) {
-    return installer.uninstall(context, packageName, versionName);
   }
 
   public Observable<List<Install>> getTimedOutInstallations() {
@@ -386,9 +381,7 @@ public class InstallManager {
     intent.setAction(InstallService.ACTION_START_INSTALL);
     intent.putExtra(InstallService.EXTRA_INSTALLATION_MD5, md5);
     intent.putExtra(InstallService.EXTRA_FORCE_DEFAULT_INSTALL, forceDefaultInstall);
-    if (installer instanceof RollbackInstaller) {
-      intent.putExtra(InstallService.EXTRA_INSTALLER_TYPE, InstallService.INSTALLER_TYPE_ROLLBACK);
-    } else if (installer instanceof DefaultInstaller) {
+    if (installer instanceof DefaultInstaller) {
       intent.putExtra(InstallService.EXTRA_INSTALLER_TYPE, InstallService.INSTALLER_TYPE_DEFAULT);
     }
     context.startService(intent);

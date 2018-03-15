@@ -2,16 +2,18 @@ package cm.aptoide.pt.store.view;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import cm.aptoide.pt.analytics.Analytics;
+import android.support.v4.app.Fragment;
+import cm.aptoide.pt.analytics.NavigationTracker;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.dataprovider.model.v7.store.ListStores;
 import cm.aptoide.pt.dataprovider.model.v7.store.Store;
 import cm.aptoide.pt.dataprovider.ws.v7.Endless;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
-import com.facebook.appevents.AppEventsLogger;
 import java.util.LinkedList;
 import java.util.List;
+import javax.inject.Inject;
 import rx.functions.Action1;
 
 /**
@@ -20,12 +22,14 @@ import rx.functions.Action1;
 
 public class ListStoresFragment extends GetStoreEndlessFragment<ListStores> {
 
+  @Inject AnalyticsManager analyticsManager;
+  @Inject NavigationTracker navigationTracker;
   private StoreAnalytics storeAnalytics;
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    storeAnalytics =
-        new StoreAnalytics(AppEventsLogger.newLogger(getContext()), Analytics.getInstance());
+    getFragmentComponent(savedInstanceState).inject(this);
+    storeAnalytics = new StoreAnalytics(analyticsManager, navigationTracker);
   }
 
   @Override protected V7<ListStores, ? extends Endless> buildRequest(boolean refresh, String url) {

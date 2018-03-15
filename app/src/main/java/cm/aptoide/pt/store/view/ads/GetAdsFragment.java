@@ -4,11 +4,9 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.WindowManager;
-import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.database.realm.MinimalAd;
-import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.store.view.StoreTabGridRecyclerFragment;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
 import cm.aptoide.pt.view.recycler.displayable.DisplayableGroup;
@@ -16,8 +14,6 @@ import cm.aptoide.pt.view.recycler.displayable.GridAdDisplayable;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import okhttp3.OkHttpClient;
-import retrofit2.Converter;
 import rx.Observable;
 
 /**
@@ -30,15 +26,11 @@ public class GetAdsFragment extends StoreTabGridRecyclerFragment {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    final AptoideAccountManager accountManager =
-        ((AptoideApplication) getContext().getApplicationContext()).getAccountManager();
-    final OkHttpClient httpClient =
-        ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
-    final Converter.Factory converterFactory = WebService.getDefaultConverter();
     adsRepository = ((AptoideApplication) getContext().getApplicationContext()).getAdsRepository();
   }
 
-  @Override protected Observable<List<Displayable>> buildDisplayables(boolean refresh, String url) {
+  @Override protected Observable<List<Displayable>> buildDisplayables(boolean refresh, String url,
+      boolean bypassServerCache) {
     return adsRepository.getAdsFromHomepageMore(refresh)
         .map(minimalAds -> {
           List<Displayable> displayables = new LinkedList<>();

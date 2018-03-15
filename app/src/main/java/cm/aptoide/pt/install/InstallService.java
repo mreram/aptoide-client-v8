@@ -7,7 +7,6 @@ package cm.aptoide.pt.install;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,34 +16,23 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import cm.aptoide.pt.AptoideApplication;
+import cm.aptoide.pt.BaseService;
 import cm.aptoide.pt.DeepLinkIntentReceiver;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.ads.MinimalAdMapper;
-import cm.aptoide.pt.analytics.Analytics;
-import cm.aptoide.pt.database.AccessorFactory;
-import cm.aptoide.pt.database.accessors.ScheduledAccessor;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.database.realm.Installed;
-import cm.aptoide.pt.database.realm.Scheduled;
-import cm.aptoide.pt.dataprovider.ws.v7.analyticsbody.Result;
-import cm.aptoide.pt.download.DownloadEvent;
+import cm.aptoide.pt.download.DownloadAnalytics;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.repository.RepositoryFactory;
-import com.crashlytics.android.answers.Answers;
-import com.facebook.appevents.AppEventsLogger;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
+import javax.inject.Inject;
+import javax.inject.Named;
 import rx.Completable;
 import rx.Observable;
 import rx.subscriptions.CompositeSubscription;
 
-/**
- * Created by marcelobenites on 9/29/16.
- */
-
-public class InstallService extends Service {
+public class InstallService extends BaseService {
 
   public static final String TAG = "InstallService";
 
@@ -58,40 +46,27 @@ public class InstallService extends Service {
   public static final String EXTRA_INSTALLER_TYPE = "INSTALLER_TYPE";
   public static final String EXTRA_FORCE_DEFAULT_INSTALL = "EXTRA_FORCE_DEFAULT_INSTALL";
   public static final int INSTALLER_TYPE_DEFAULT = 0;
-  public static final int INSTALLER_TYPE_ROLLBACK = 1;
 
   private static final int NOTIFICATION_ID = 8;
 
-  private AptoideDownloadManager downloadManager;
-
+  @Inject AptoideDownloadManager downloadManager;
+  @Inject @Named("default") Installer defaultInstaller;
+  @Inject InstalledRepository installedRepository;
+  @Inject DownloadAnalytics downloadAnalytics;
+  private InstallManager installManager;
   private CompositeSubscription subscriptions;
   private Notification notification;
-  private Installer rollbackInstaller;
-  private Installer defaultInstaller;
-  private InstallManager installManager;
-  private Map<String, Integer> installerTypeMap;
-  private Analytics analytics;
-  private InstalledRepository installedRepository;
   private String marketName;
 
   @Override public void onCreate() {
     super.onCreate();
+    getApplicationComponent().inject(this);
     Logger.d(TAG, "Install service is starting");
     final AptoideApplication application = (AptoideApplication) getApplicationContext();
+    installManager = application.getInstallManager();
     marketName = application.getMarketName();
-    downloadManager = application.getDownloadManager();
-    final MinimalAdMapper adMapper = new MinimalAdMapper();
-    InstallerFactory installerFactory = new InstallerFactory(adMapper,
-        new InstallFabricEvents(Analytics.getInstance(), Answers.getInstance(),
-            AppEventsLogger.newLogger(getApplicationContext())), application.getImageCachePath());
-    defaultInstaller = installerFactory.create(this, InstallerFactory.DEFAULT);
-    rollbackInstaller = installerFactory.create(this, InstallerFactory.ROLLBACK);
-    installManager =
-        ((AptoideApplication) getApplicationContext()).getInstallManager(InstallerFactory.ROLLBACK);
     subscriptions = new CompositeSubscription();
     setupNotification();
-    installerTypeMap = new HashMap();
-    analytics = Analytics.getInstance();
     installedRepository = RepositoryFactory.getInstalledRepository(getApplicationContext());
   }
 
@@ -99,8 +74,6 @@ public class InstallService extends Service {
     if (intent != null) {
       String md5 = intent.getStringExtra(EXTRA_INSTALLATION_MD5);
       if (ACTION_START_INSTALL.equals(intent.getAction())) {
-        installerTypeMap.put(md5,
-            intent.getIntExtra(EXTRA_INSTALLER_TYPE, INSTALLER_TYPE_ROLLBACK));
         subscriptions.add(downloadAndInstall(this, md5, intent.getExtras()
             .getBoolean(EXTRA_FORCE_DEFAULT_INSTALL, false)).subscribe(
             hasNext -> treatNext(hasNext), throwable -> removeNotificationAndStop()));
@@ -160,28 +133,16 @@ public class InstallService extends Service {
     return downloadManager.getDownload(md5)
         .first()
         .doOnNext(download -> initInstallationProgress(download))
-        .flatMap(download -> downloadManager.startDownload(download))
+        .flatMap(download -> downloadManager.startDownload(download)
+            .first())
+        .flatMap(download -> downloadManager.getDownload(download.getMd5()))
         .doOnNext(download -> {
           stopOnDownloadError(download.getOverallDownloadStatus());
           if (download.getOverallDownloadStatus() == Download.PROGRESS) {
-            DownloadEvent report =
-                (DownloadEvent) analytics.get(download.getPackageName() + download.getVersionCode(),
-                    DownloadEvent.class);
-            if (report != null) {
-              report.setDownloadHadProgress(true);
-            }
+            downloadAnalytics.startProgress(download);
           }
         })
         .first(download -> download.getOverallDownloadStatus() == Download.COMPLETED)
-        .doOnNext(download -> {
-          DownloadEvent report =
-              (DownloadEvent) analytics.get(download.getPackageName() + download.getVersionCode(),
-                  DownloadEvent.class);
-          if (report != null) {
-            report.setResultStatus(Result.ResultStatus.SUCC);
-            analytics.sendEvent(report);
-          }
-        })
         .flatMap(download -> stopForegroundAndInstall(context, download, true,
             forceDefaultInstall).andThen(sendBackgroundInstallFinishedBroadcast(download))
             .andThen(hasNextDownload()));
@@ -213,18 +174,7 @@ public class InstallService extends Service {
     return Completable.fromAction(() -> {
       sendBroadcast(
           new Intent(ACTION_INSTALL_FINISHED).putExtra(EXTRA_INSTALLATION_MD5, download.getMd5()));
-      if (download.isScheduled()) {
-        removeFromScheduled(download.getMd5());
-      }
     });
-  }
-
-  private void removeFromScheduled(String md5) {
-    ScheduledAccessor scheduledAccessor = AccessorFactory.getAccessorFor(
-        ((AptoideApplication) getApplicationContext().getApplicationContext()).getDatabase(),
-        Scheduled.class);
-    scheduledAccessor.delete(md5);
-    Logger.d(TAG, "Removing schedulled download with appId " + md5);
   }
 
   private Completable stopForegroundAndInstall(Context context, Download download,
@@ -245,18 +195,7 @@ public class InstallService extends Service {
   }
 
   private Installer getInstaller(String md5) {
-    Integer installerType = installerTypeMap.get(md5);
-    Installer installer;
-    switch (installerType) {
-      case INSTALLER_TYPE_DEFAULT:
-        installer = defaultInstaller;
-        break;
-      case INSTALLER_TYPE_ROLLBACK:
-      default:
-        installer = rollbackInstaller;
-        break;
-    }
-    return installer;
+    return defaultInstaller;
   }
 
   private void setupNotification() {

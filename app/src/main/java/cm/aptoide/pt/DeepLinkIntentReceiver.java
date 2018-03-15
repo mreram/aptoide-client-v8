@@ -9,6 +9,7 @@ import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.content.UriMatcher;
+import android.content.pm.ShortcutManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,7 +17,8 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Base64;
 import cm.aptoide.pt.ads.MinimalAdMapper;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.model.v2.GetAdsResponse;
@@ -58,6 +60,7 @@ public class DeepLinkIntentReceiver extends ActivityView {
   public static final int SCHEDULE_DOWNLOADS_ID = 2;
   public static final String DEEP_LINK = "deeplink";
   public static final String SCHEDULE_DOWNLOADS = "schedule_downloads";
+  public static final String FROM_SHORTCUT = "from_shortcut";
   private static final String TAG = DeepLinkIntentReceiver.class.getSimpleName();
   private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -74,15 +77,49 @@ public class DeepLinkIntentReceiver extends ActivityView {
   private AsyncTask<String, Void, Void> asyncTask;
   private InstalledRepository installedRepository;
   private MinimalAdMapper adMapper;
+  private AnalyticsManager analyticsManager;
+  private NavigationTracker navigationTracker;
+  private DeepLinkAnalytics deepLinkAnalytics;
+  private boolean shortcutNavigation;
 
   @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    final AptoideApplication application = (AptoideApplication) getApplicationContext();
+    analyticsManager = application.getAnalyticsManager();
+    navigationTracker = application.getNavigationTracker();
+    deepLinkAnalytics = new DeepLinkAnalytics(analyticsManager, navigationTracker);
     installedRepository = RepositoryFactory.getInstalledRepository(getApplicationContext());
 
     adMapper = new MinimalAdMapper();
     TMP_MYAPP_FILE = getCacheDir() + "/myapp.myapp";
     String uri = getIntent().getDataString();
-    Analytics.ApplicationLaunch.website(uri);
+    deepLinkAnalytics.website(uri);
+    shortcutNavigation = false;
+
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {
+
+      ShortcutManager shortcutManager =
+          getApplicationContext().getSystemService(ShortcutManager.class);
+      Intent fromShortcut = getIntent();
+
+      if (fromShortcut != null) {
+        if (fromShortcut.hasExtra("search")) {
+          if (fromShortcut.getBooleanExtra("search", false)) {
+            shortcutNavigation = true;
+            if (shortcutManager != null) {
+              shortcutManager.reportShortcutUsed("search");
+            }
+          }
+        } else if (fromShortcut.hasExtra("timeline")) {
+          if (fromShortcut.getBooleanExtra("timeline", false)) {
+            shortcutNavigation = true;
+            if (shortcutManager != null) {
+              shortcutManager.reportShortcutUsed("timeline");
+            }
+          }
+        }
+      }
+    }
 
     Logger.v(TAG, "uri: " + uri);
 
@@ -282,13 +319,28 @@ public class DeepLinkIntentReceiver extends ActivityView {
         finish();
         return;
       }
-      switch (sURIMatcher.match(parse)) {
-        case DEEPLINK_ID:
-          startGenericDeepLink(parse);
-          break;
-        case SCHEDULE_DOWNLOADS_ID:
-          startScheduleDownloads(parse);
-          break;
+      if ("search".equals(parse.getQueryParameter("name"))) {
+        String query = "";
+        if (parse.getQueryParameterNames()
+            .contains("keyword")) {
+          query = parse.getQueryParameter("keyword");
+        }
+        startFromSearch(query);
+        finish();
+        return;
+      }
+      if ("myStore".equals(parse.getQueryParameter("name"))) {
+        startFromMyStore();
+        finish();
+        return;
+      }
+      if ("pickApp".equals(parse.getQueryParameter("name"))) {
+        startFromPickApp();
+        finish();
+        return;
+      }
+      if (sURIMatcher.match(parse) == DEEPLINK_ID) {
+        startGenericDeepLink(parse);
       }
       finish();
     } else {
@@ -308,7 +360,7 @@ public class DeepLinkIntentReceiver extends ActivityView {
     startActivity(i);
 
     // TODO: 10-08-2016 jdandrade
-    Analytics.ApplicationLaunch.newRepo();
+    deepLinkAnalytics.newRepo();
   }
 
   private void parseXmlString(String file) {
@@ -357,6 +409,7 @@ public class DeepLinkIntentReceiver extends ActivityView {
 
   public void aptoidevoiceSearch(String param) {
     // TODO: voiceSearch was used by a foreign app, dunno if still used.
+
     //        Cursor c = new AptoideDatabase(Aptoide.getDb()).getSearchResults(param, StoreActivity.Sort.DOWNLOADS);
     //
     //        ArrayList<String> namelist = new ArrayList<String>();
@@ -400,6 +453,7 @@ public class DeepLinkIntentReceiver extends ActivityView {
     Intent i = new Intent(this, startClass);
     i.putExtra(DeepLinksTargets.TIMELINE_DEEPLINK, true);
     i.putExtra(DeepLinksKeys.CARD_ID, cardId);
+    if (shortcutNavigation) i.putExtra(FROM_SHORTCUT, shortcutNavigation);
 
     startActivity(i);
   }
@@ -426,13 +480,6 @@ public class DeepLinkIntentReceiver extends ActivityView {
     startActivity(intent);
   }
 
-  private void startScheduleDownloads(Uri parse) {
-    Intent intent = new Intent(this, startClass);
-    intent.putExtra(DeepLinksTargets.SCHEDULE_DEEPLINK, true);
-    intent.putExtra(DeepLinksKeys.URI, parse);
-    startActivity(intent);
-  }
-
   public void startFromAppView(String packageName) {
     Intent i = new Intent(this, startClass);
 
@@ -447,6 +494,7 @@ public class DeepLinkIntentReceiver extends ActivityView {
 
     i.putExtra(DeepLinksTargets.SEARCH_FRAGMENT, true);
     i.putExtra(SearchManager.QUERY, query);
+    i.putExtra(FROM_SHORTCUT, shortcutNavigation);
 
     startActivity(i);
   }
@@ -457,6 +505,18 @@ public class DeepLinkIntentReceiver extends ActivityView {
     intent.putExtra(DeepLinksKeys.PACKAGE_NAME_KEY, packageName);
     intent.putExtra(DeepLinksKeys.STORENAME_KEY, repo);
     intent.putExtra(DeepLinksKeys.SHOW_AUTO_INSTALL_POPUP, showPopup);
+    startActivity(intent);
+  }
+
+  private void startFromMyStore() {
+    Intent intent = new Intent(this, startClass);
+    intent.putExtra(DeepLinksTargets.MY_STORE_DEEPLINK, true);
+    startActivity(intent);
+  }
+
+  private void startFromPickApp() {
+    Intent intent = new Intent(this, startClass);
+    intent.putExtra(DeepLinksTargets.PICK_APP_DEEPLINK, true);
     startActivity(intent);
   }
 
@@ -531,9 +591,10 @@ public class DeepLinkIntentReceiver extends ActivityView {
     public static final String APP_VIEW_FRAGMENT = "appViewFragment";
     public static final String SEARCH_FRAGMENT = "searchFragment";
     public static final String GENERIC_DEEPLINK = "generic_deeplink";
-    public static final String SCHEDULE_DEEPLINK = "schedule_downloads";
     public static final String USER_DEEPLINK = "open_user_profile";
     public static final String TIMELINE_DEEPLINK = "apps_timeline";
+    public static final String MY_STORE_DEEPLINK = "my_store";
+    public static final String PICK_APP_DEEPLINK = "pick_app_deeplink";
   }
 
   public static class DeepLinksKeys {

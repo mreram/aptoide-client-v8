@@ -20,8 +20,9 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.addressbook.AddressBookAnalytics;
 import cm.aptoide.pt.addressbook.data.ContactsRepository;
 import cm.aptoide.pt.addressbook.utils.ContactUtils;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
@@ -29,8 +30,8 @@ import cm.aptoide.pt.presenter.PhoneInputContract;
 import cm.aptoide.pt.presenter.PhoneInputPresenter;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.view.fragment.UIComponentFragment;
-import com.facebook.appevents.AppEventsLogger;
 import com.jakewharton.rxbinding.view.RxView;
+import javax.inject.Inject;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 
@@ -40,6 +41,8 @@ import retrofit2.Converter;
 public class PhoneInputFragment extends UIComponentFragment implements PhoneInputContract.View {
 
   public static final String TAG = "TAG";
+  @Inject AnalyticsManager analyticsManager;
+  @Inject NavigationTracker navigationTracker;
   private PhoneInputContract.UserActionsListener mActionsListener;
   private TextView mNotNowV;
   private TextView mSharePhoneV;
@@ -66,6 +69,9 @@ public class PhoneInputFragment extends UIComponentFragment implements PhoneInpu
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
+    final AptoideApplication application =
+        (AptoideApplication) getContext().getApplicationContext();
     final BodyInterceptor<BaseBody> baseBodyInterceptor =
         ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     final OkHttpClient httpClient =
@@ -74,14 +80,11 @@ public class PhoneInputFragment extends UIComponentFragment implements PhoneInpu
     marketName = application.getMarketName();
     this.mActionsListener = new PhoneInputPresenter(this,
         new ContactsRepository(baseBodyInterceptor, httpClient, converterFactory,
-            ((AptoideApplication) getContext().getApplicationContext()).getIdsRepository(),
-            new ContactUtils(
-                (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
-                getContext().getContentResolver()),
-            ((AptoideApplication) getContext().getApplicationContext()).getTokenInvalidator(),
-            ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences()),
-        new AddressBookAnalytics(Analytics.getInstance(),
-            AppEventsLogger.newLogger(getContext().getApplicationContext())),
+            application.getIdsRepository(), new ContactUtils(
+            (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE),
+            getContext().getContentResolver()), application.getTokenInvalidator(),
+            application.getDefaultSharedPreferences()),
+        new AddressBookAnalytics(analyticsManager, navigationTracker),
         new AddressBookNavigationManager(getFragmentNavigator(), entranceTag,
             getString(R.string.addressbook_about),
             getString(R.string.addressbook_data_about, marketName)));

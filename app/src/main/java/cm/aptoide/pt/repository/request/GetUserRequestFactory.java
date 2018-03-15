@@ -3,11 +3,11 @@ package cm.aptoide.pt.repository.request;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.view.WindowManager;
+import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetUserRequest;
-import cm.aptoide.pt.preferences.AdultContent;
 import cm.aptoide.pt.store.StoreCredentialsProvider;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
@@ -28,7 +28,7 @@ public class GetUserRequestFactory {
   private final StoreCredentialsProvider storeCredentialsProvider;
   private final String clientUniqueId;
   private final String partnerId;
-  private final AdultContent adultContent;
+  private final AptoideAccountManager accountManager;
   private final String filters;
   private final ConnectivityManager systemService;
   private final AdsApplicationVersionCodeProvider versionCodeProvider;
@@ -37,7 +37,7 @@ public class GetUserRequestFactory {
       Converter.Factory converterFactory, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences, Resources resources, WindowManager windowManager,
       StoreCredentialsProvider storeCredentialsProvider, String clientUniqueId, String partnerId,
-      AdultContent adultContent, String filters, ConnectivityManager systemService,
+      AptoideAccountManager accountManager, String filters, ConnectivityManager systemService,
       AdsApplicationVersionCodeProvider versionCodeProvider) {
     this.bodyInterceptor = bodyInterceptor;
     this.httpClient = httpClient;
@@ -49,7 +49,7 @@ public class GetUserRequestFactory {
     this.storeCredentialsProvider = storeCredentialsProvider;
     this.clientUniqueId = clientUniqueId;
     this.partnerId = partnerId;
-    this.adultContent = adultContent;
+    this.accountManager = accountManager;
     this.filters = filters;
     this.systemService = systemService;
     this.versionCodeProvider = versionCodeProvider;
@@ -57,7 +57,7 @@ public class GetUserRequestFactory {
 
   public GetUserRequest newGetUser(String url, boolean googlePlayServicesAvailable) {
 
-    final Boolean adultContentEnabled = adultContent.enabled()
+    final Boolean adultContentEnabled = accountManager.enabled()
         .first()
         .toSingle()
         .toBlocking()

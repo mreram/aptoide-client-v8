@@ -19,11 +19,11 @@ public class ScreenTagHistory {
   }
 
   public String getStore() {
-    return store;
+    return store != null ? store : "";
   }
 
   public String getFragment() {
-    return fragment;
+    return fragment != null ? fragment : "";
   }
 
   public void setFragment(String fragment) {
@@ -31,7 +31,7 @@ public class ScreenTagHistory {
   }
 
   public String getTag() {
-    return tag;
+    return tag != null ? tag : "";
   }
 
   public void setTag(String tag) {
@@ -53,6 +53,9 @@ public class ScreenTagHistory {
   }
 
   public static class Builder {
+
+    public static final String APTOIDE_MAIN_HISTORY_STORE = "aptoide_main";
+
     private Builder() {
     }
 
@@ -69,7 +72,7 @@ public class ScreenTagHistory {
       if (storeContext == null) {
         store = "";
       } else if (storeContext.equals(StoreContext.home)) {
-        store = "aptoide_main";
+        store = APTOIDE_MAIN_HISTORY_STORE;
       } else {
         store = storeContext.name();
       }

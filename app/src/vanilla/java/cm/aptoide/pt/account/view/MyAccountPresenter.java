@@ -16,6 +16,7 @@ import rx.android.schedulers.AndroidSchedulers;
 
 public class MyAccountPresenter implements Presenter {
 
+  public static final int EDIT_STORE_REQUEST_CODE = 1230;
   private final MyAccountView view;
   private final AptoideAccountManager accountManager;
   private final CrashReport crashReport;
@@ -45,6 +46,7 @@ public class MyAccountPresenter implements Presenter {
   @Override public void present() {
     showAndPopulateAccountViews();
     handleSignOutButtonClick();
+    handleEditStoreBackNavigation();
     handleMoreNotificationsClick();
     handleEditStoreClick();
     handleHeaderVisibility();
@@ -107,8 +109,22 @@ public class MyAccountPresenter implements Presenter {
                 .getMeta()
                 .getData()))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(store -> navigator.navigateToEditStoreView(store),
+        .subscribe(store -> navigator.navigateToEditStoreView(store, EDIT_STORE_REQUEST_CODE),
             throwable -> crashReport.log(throwable));
+  }
+
+  private void handleEditStoreBackNavigation() {
+    view.getLifecycle()
+        .filter(event -> event.equals(View.LifecycleEvent.CREATE))
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .flatMap(__ -> navigator.editStoreResult(EDIT_STORE_REQUEST_CODE))
+        .flatMap(__ -> accountManager.accountStatus()
+            .first())
+        .observeOn(AndroidSchedulers.mainThread())
+        .doOnNext(account -> view.showAccount(account))
+        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
+        .subscribe(notification -> {
+        }, throwable -> crashReport.log(throwable));
   }
 
   private void handleHeaderVisibility() {
@@ -147,7 +163,6 @@ public class MyAccountPresenter implements Presenter {
           navigator.navigateToNotification(notification);
           analytics.sendNotificationTouchEvent(notification.getNotificationCenterUrlTrack());
           navigationTracker.registerScreen(ScreenTagHistory.Builder.build("Notification"));
-          pageViewsAnalytics.sendPageViewedEvent();
         })
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(notificationUrl -> {

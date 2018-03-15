@@ -6,6 +6,7 @@
 package cm.aptoide.pt.view.recycler.displayable;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.util.Pair;
@@ -21,26 +22,28 @@ import cm.aptoide.pt.app.view.GridAppDisplayable;
 import cm.aptoide.pt.app.view.GridAppListDisplayable;
 import cm.aptoide.pt.app.view.OfficialAppDisplayable;
 import cm.aptoide.pt.database.AccessorFactory;
+import cm.aptoide.pt.database.accessors.StoreAccessor;
+import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v2.GetAdsResponse;
 import cm.aptoide.pt.dataprovider.model.v7.Event;
-import cm.aptoide.pt.dataprovider.model.v7.FullReview;
 import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
 import cm.aptoide.pt.dataprovider.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.dataprovider.model.v7.Layout;
 import cm.aptoide.pt.dataprovider.model.v7.ListApps;
 import cm.aptoide.pt.dataprovider.model.v7.ListComments;
-import cm.aptoide.pt.dataprovider.model.v7.ListFullReviews;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
 import cm.aptoide.pt.dataprovider.model.v7.store.GetHomeMeta;
 import cm.aptoide.pt.dataprovider.model.v7.store.GetStoreDisplays;
 import cm.aptoide.pt.dataprovider.model.v7.store.ListStores;
 import cm.aptoide.pt.dataprovider.model.v7.store.Store;
+import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseRequestWithStore;
 import cm.aptoide.pt.dataprovider.ws.v7.MyStore;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
 import cm.aptoide.pt.install.InstalledRepository;
+import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.repository.StoreRepository;
-import cm.aptoide.pt.reviews.RowReviewDisplayable;
 import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
@@ -60,6 +63,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import okhttp3.OkHttpClient;
+import retrofit2.Converter;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 
@@ -74,7 +79,10 @@ public class DisplayablesFactory {
       AptoideAccountManager accountManager, StoreUtilsProxy storeUtilsProxy,
       WindowManager windowManager, Resources resources, InstalledRepository installedRepository,
       StoreAnalytics storeAnalytics, StoreTabNavigator storeTabNavigator,
-      NavigationTracker navigationTracker, BadgeDialogFactory badgeDialogFactory) {
+      NavigationTracker navigationTracker, BadgeDialogFactory badgeDialogFactory,
+      FragmentNavigator fragmentNavigator, StoreAccessor storeAccessor,
+      BodyInterceptor<BaseBody> bodyInterceptorV7, OkHttpClient client, Converter.Factory converter,
+      TokenInvalidator tokenInvalidator, SharedPreferences sharedPreferences) {
 
     LinkedList<Displayable> displayables = new LinkedList<>();
 
@@ -125,16 +133,14 @@ public class DisplayablesFactory {
               new StoreCredentialsProviderImpl(AccessorFactory.getAccessorFor(
                   ((AptoideApplication) context.getApplicationContext()
                       .getApplicationContext()).getDatabase(),
-                  cm.aptoide.pt.database.realm.Store.class)), storeAnalytics, badgeDialogFactory));
-
-        case REVIEWS_GROUP:
-          return Observable.from(
-              createReviewsGroupDisplayables(widget, windowManager, resources, storeTabNavigator,
-                  navigationTracker));
+                  cm.aptoide.pt.database.realm.Store.class)), storeAnalytics, badgeDialogFactory,
+              fragmentNavigator, storeAccessor, bodyInterceptorV7, client, converter,
+              tokenInvalidator, sharedPreferences));
 
         case MY_STORE_META:
           return Observable.from(
-              createMyStoreDisplayables(widget.getViewObject(), storeAnalytics, storeContext));
+              createMyStoreDisplayables(widget.getViewObject(), storeAnalytics, storeContext,
+                  accountManager));
 
         case STORES_RECOMMENDED:
           return Observable.just(
@@ -343,34 +349,16 @@ public class DisplayablesFactory {
     return Collections.emptyList();
   }
 
-  private static List<Displayable> createReviewsGroupDisplayables(GetStoreWidgets.WSWidget wsWidget,
-      WindowManager windowManager, Resources resources, StoreTabNavigator storeTabNavigator,
-      NavigationTracker navigationTracker) {
-    List<Displayable> displayables = new LinkedList<>();
-
-    ListFullReviews reviewsList = (ListFullReviews) wsWidget.getViewObject();
-    if (reviewsList != null
-        && reviewsList.getDataList() != null
-        && reviewsList.getDataList()
-        .getList()
-        .size() > 0) {
-      displayables.add(
-          new StoreGridHeaderDisplayable(wsWidget, storeTabNavigator, navigationTracker));
-      displayables.add(createReviewsDisplayables(reviewsList, windowManager, resources));
-    }
-
-    return displayables;
-  }
-
   private static List<Displayable> createMyStoreDisplayables(Object viewObject,
-      StoreAnalytics storeAnalytics, StoreContext storeContext) {
+      StoreAnalytics storeAnalytics, StoreContext storeContext,
+      AptoideAccountManager accountManager) {
     LinkedList<Displayable> displayables = new LinkedList<>();
 
     if (viewObject instanceof MyStore) {
       MyStore store = (MyStore) viewObject;
       if (!store.isCreateStore()) {
         displayables.add(new MyStoreDisplayable(store, storeContext));
-      } else if (store.isLogged()) {
+      } else if (accountManager.isLoggedIn()) {
         displayables.add(new CreateStoreDisplayable(storeAnalytics, store.getTimelineStats()));
       } else {
         displayables.add(new LoginDisplayable());
@@ -453,17 +441,5 @@ public class DisplayablesFactory {
               return nwStore;
             })
             .toList());
-  }
-
-  private static Displayable createReviewsDisplayables(ListFullReviews listFullReviews,
-      WindowManager windowManager, Resources resources) {
-    List<FullReview> reviews = listFullReviews.getDataList()
-        .getList();
-    final List<Displayable> displayables = new ArrayList<>(reviews.size());
-    for (int i = 0; i < reviews.size(); i++) {
-      displayables.add(new RowReviewDisplayable(reviews.get(i)));
-    }
-
-    return new DisplayableGroup(displayables, windowManager, resources);
   }
 }

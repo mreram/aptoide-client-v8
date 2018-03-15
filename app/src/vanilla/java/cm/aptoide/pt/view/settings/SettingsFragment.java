@@ -31,10 +31,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
+import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
-import cm.aptoide.pt.PageViewsAnalytics;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.account.AdultContentAnalytics;
 import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
@@ -45,7 +45,6 @@ import cm.aptoide.pt.database.realm.Update;
 import cm.aptoide.pt.file.FileManager;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.notification.NotificationSyncScheduler;
-import cm.aptoide.pt.preferences.AdultContent;
 import cm.aptoide.pt.preferences.managed.ManagedKeys;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.repository.RepositoryFactory;
@@ -59,7 +58,6 @@ import cm.aptoide.pt.view.ThemeUtils;
 import cm.aptoide.pt.view.dialog.EditableTextDialog;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
 import cm.aptoide.pt.view.rx.RxPreference;
-import com.facebook.appevents.AppEventsLogger;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subscriptions.CompositeSubscription;
@@ -84,7 +82,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
   private Context context;
   private CompositeSubscription subscriptions;
   private FileManager fileManager;
-  private AdultContent adultContent;
+  private AptoideAccountManager accountManager;
 
   private RxAlertDialog adultContentConfirmationDialog;
   private EditableTextDialog enableAdultContentPinDialog;
@@ -103,8 +101,8 @@ public class SettingsFragment extends PreferenceFragmentCompat
   private Database database;
   private NavigationTracker navigationTracker;
   private UpdateRepository repository;
-  private PageViewsAnalytics pageViewsAnalytics;
   private String defaultThemeName;
+  private AdultContentAnalytics adultContentAnalytics;
 
   public static Fragment newInstance() {
     return new SettingsFragment();
@@ -114,11 +112,13 @@ public class SettingsFragment extends PreferenceFragmentCompat
     super.onCreate(savedInstanceState);
     final AptoideApplication application =
         (AptoideApplication) getContext().getApplicationContext();
+    adultContentAnalytics = application.getAdultContentAnalytics();
     defaultThemeName = application.getDefaultThemeName();
     marketName = application.getMarketName();
     trackAnalytics = true;
     database = ((AptoideApplication) getContext().getApplicationContext()).getDatabase();
-    adultContent = ((AptoideApplication) getContext().getApplicationContext()).getAdultContent();
+    accountManager =
+        ((AptoideApplication) getContext().getApplicationContext()).getAccountManager();
     fileManager = ((AptoideApplication) getContext().getApplicationContext()).getFileManager();
     subscriptions = new CompositeSubscription();
     adultContentConfirmationDialog =
@@ -128,19 +128,19 @@ public class SettingsFragment extends PreferenceFragmentCompat
             .build();
     enableAdultContentPinDialog =
         new PinDialog.Builder(getContext()).setMessage(R.string.request_adult_pin)
-            .setPositiveButton(R.string.ok)
+            .setPositiveButton(R.string.all_button_ok)
             .setNegativeButton(R.string.cancel)
             .setView(R.layout.dialog_requestpin)
             .setEditText(R.id.pininput)
             .build();
     removePinDialog = new PinDialog.Builder(getContext()).setMessage(R.string.request_adult_pin)
-        .setPositiveButton(R.string.ok)
+        .setPositiveButton(R.string.all_button_ok)
         .setNegativeButton(R.string.cancel)
         .setView(R.layout.dialog_requestpin)
         .setEditText(R.id.pininput)
         .build();
     setPinDialog = new PinDialog.Builder(getContext()).setMessage(R.string.asksetadultpinmessage)
-        .setPositiveButton(R.string.ok)
+        .setPositiveButton(R.string.all_button_ok)
         .setNegativeButton(R.string.cancel)
         .setView(R.layout.dialog_requestpin)
         .setEditText(R.id.pininput)
@@ -150,15 +150,10 @@ public class SettingsFragment extends PreferenceFragmentCompat
         ((AptoideApplication) getContext().getApplicationContext()).getNotificationSyncScheduler();
     navigationTracker =
         ((AptoideApplication) getContext().getApplicationContext()).getNavigationTracker();
-
     repository = RepositoryFactory.getUpdateRepository(getContext(),
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
-    pageViewsAnalytics =
-        new PageViewsAnalytics(AppEventsLogger.newLogger(getContext().getApplicationContext()),
-            Analytics.getInstance(), navigationTracker);
     navigationTracker.registerScreen(ScreenTagHistory.Builder.build(this.getClass()
         .getSimpleName()));
-    pageViewsAnalytics.sendPageViewedEvent();
   }
 
   @Override public void onCreatePreferences(Bundle bundle, String s) {
@@ -218,7 +213,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
     if (shouldRefreshUpdates(key)) {
       UpdateAccessor updateAccessor = AccessorFactory.getAccessorFor(database, Update.class);
       updateAccessor.removeAll();
-      repository.sync(true)
+      repository.sync(true, false)
           .andThen(repository.getAll(false))
           .first()
           .subscribe(updates -> Logger.d(TAG, "updates refreshed"),
@@ -249,7 +244,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
     subscriptions.add(RxPreference.checks(socialCampaignNotifications)
         .subscribe(isChecked -> handleSocialNotifications(isChecked)));
 
-    subscriptions.add(adultContent.enabled()
+    subscriptions.add(accountManager.enabled()
         .observeOn(AndroidSchedulers.mainThread())
         .doOnNext(state -> adultContentPreferenceView.setChecked(state))
         .doOnNext(state -> adultContentWithPinPreferenceView.setChecked(state))
@@ -257,7 +252,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     subscriptions.add(adultContentConfirmationDialog.positiveClicks()
         .doOnNext(click -> adultContentPreferenceView.setEnabled(false))
-        .flatMap(click -> adultContent.enable()
+        .flatMap(click -> accountManager.enable()
             .doOnCompleted(() -> trackUnlock())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnTerminate(() -> adultContentPreferenceView.setEnabled(true))
@@ -273,7 +268,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
             return Observable.empty();
           } else {
             adultContentPreferenceView.setEnabled(false);
-            return adultContent.disable()
+            return accountManager.disable()
                 .doOnCompleted(() -> trackLock())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnTerminate(() -> adultContentPreferenceView.setEnabled(true))
@@ -291,7 +286,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
             return Observable.empty();
           } else {
             adultContentWithPinPreferenceView.setEnabled(false);
-            return adultContent.disable()
+            return accountManager.disable()
                 .doOnCompleted(() -> trackLock())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnTerminate(() -> adultContentWithPinPreferenceView.setEnabled(true))
@@ -301,7 +296,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
         .retry()
         .subscribe());
 
-    subscriptions.add(adultContent.pinRequired()
+    subscriptions.add(accountManager.pinRequired()
         .observeOn(AndroidSchedulers.mainThread())
         .doOnNext(pinRequired -> {
           if (pinRequired) {
@@ -332,13 +327,13 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     subscriptions.add(setPinDialog.positiveClicks()
         .filter(pin -> !TextUtils.isEmpty(pin))
-        .flatMap(pin -> adultContent.requirePin(Integer.valueOf(pin.toString()))
+        .flatMap(pin -> accountManager.requirePin(Integer.valueOf(pin.toString()))
             .toObservable())
         .retry()
         .subscribe());
 
     subscriptions.add(removePinDialog.positiveClicks()
-        .flatMap(pin -> adultContent.removePin(Integer.valueOf(pin.toString()))
+        .flatMap(pin -> accountManager.removePin(Integer.valueOf(pin.toString()))
             .observeOn(AndroidSchedulers.mainThread())
             .doOnError(throwable -> {
               if (throwable instanceof SecurityException) {
@@ -351,7 +346,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
     subscriptions.add(enableAdultContentPinDialog.positiveClicks()
         .doOnNext(clock -> adultContentWithPinPreferenceView.setEnabled(false))
-        .flatMap(pin -> adultContent.enable(Integer.valueOf(pin.toString()))
+        .flatMap(pin -> accountManager.enable(Integer.valueOf(pin.toString()))
             .doOnCompleted(() -> trackUnlock())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnError(throwable -> {
@@ -524,14 +519,14 @@ public class SettingsFragment extends PreferenceFragmentCompat
   private void trackLock() {
     if (trackAnalytics) {
       trackAnalytics = false;
-      Analytics.AdultContent.lock();
+      adultContentAnalytics.lock();
     }
   }
 
   private void trackUnlock() {
     if (trackAnalytics) {
       trackAnalytics = false;
-      Analytics.AdultContent.unlock();
+      adultContentAnalytics.unlock();
     }
   }
 }

@@ -17,9 +17,9 @@ import io.realm.RealmSchema;
 
 /**
  * Created on 12/05/16.
- *
+ * <p>
  * This code is responsible to migrate between Realm schemas.
- *
+ * <p>
  * <a href=https://github.com/realm/realm-java/blob/master/examples/migrationExample/src/main/java/io/realm/examples/realmmigrationexample/model/Migration.java>
  * For clarification see a migration example.
  * </a>
@@ -354,6 +354,24 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
           .addField("currency", String.class)
           .addField("currencySymbol", String.class);
 
+      oldVersion++;
+    }
+    if (oldVersion == 8091) {
+      schema.create("RealmEvent")
+          .addField("timestamp", long.class, FieldAttribute.PRIMARY_KEY)
+          .addField("eventName", String.class)
+          .addField("action", int.class)
+          .addField("context", String.class)
+          .addField("data", String.class);
+      oldVersion++;
+    }
+
+    if (oldVersion == 8092) {
+      realm.delete("Rollback");
+      realm.delete("Scheduled");
+
+      schema.get("Download")
+          .removeField("scheduled");
       oldVersion++;
     }
   }

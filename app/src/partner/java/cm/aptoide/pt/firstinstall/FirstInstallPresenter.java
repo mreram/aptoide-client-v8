@@ -29,8 +29,8 @@ import cm.aptoide.pt.install.InstallManager;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
 import cm.aptoide.pt.repository.request.RequestFactory;
-import cm.aptoide.pt.search.ReferrerUtils;
 import cm.aptoide.pt.search.model.SearchAdResult;
+import cm.aptoide.pt.util.ReferrerUtils;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.q.QManager;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
@@ -289,7 +289,7 @@ public class FirstInstallPresenter implements Presenter {
                     .getId(), true, false, firstInstallAppDisplayable.getPojo()
                     .getStore()
                     .getName(), firstInstallAppDisplayable.getPojo()
-                    .getPackageName())
+                    .getPackageName(), false)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .map(app -> new DownloadFactory(app.getNodes()
@@ -314,7 +314,7 @@ public class FirstInstallPresenter implements Presenter {
             .map(firstInstallAdDisplayable -> appRepository.getApp(
                 firstInstallAdDisplayable.getPojo()
                     .getAppId(), true, true, null, firstInstallAdDisplayable.getPojo()
-                    .getPackageName())
+                    .getPackageName(), false)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .map(app -> new DownloadFactory(app.getNodes()

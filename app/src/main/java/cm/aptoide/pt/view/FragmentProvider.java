@@ -6,7 +6,6 @@ import cm.aptoide.pt.app.view.AppViewFragment;
 import cm.aptoide.pt.dataprovider.model.v7.Event;
 import cm.aptoide.pt.dataprovider.util.CommentType;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
-import cm.aptoide.pt.download.view.scheduled.ScheduledDownloadsFragment;
 import cm.aptoide.pt.presenter.InviteFriendsContract;
 import cm.aptoide.pt.search.model.SearchAdResult;
 import cm.aptoide.pt.store.view.StoreFragment;
@@ -83,9 +82,7 @@ import java.util.List;
 
   Fragment newGetStoreWidgetsFragment();
 
-  Fragment newListReviewsFragment();
-
-  Fragment newGetAdsFragment();
+  @Deprecated Fragment newGetAdsFragment();
 
   Fragment newListStoresFragment();
 
@@ -99,15 +96,9 @@ import java.util.List;
 
   Fragment newOtherVersionsFragment(String appName, String appImgUrl, String appPackage);
 
-  Fragment newRollbackFragment();
+  @Deprecated Fragment newExcludedUpdatesFragment();
 
-  Fragment newExcludedUpdatesFragment();
-
-  Fragment newScheduledDownloadsFragment();
-
-  Fragment newScheduledDownloadsFragment(ScheduledDownloadsFragment.OpenMode openMode);
-
-  Fragment newRateAndReviewsFragment(long appId, String appName, String storeName,
+  @Deprecated Fragment newRateAndReviewsFragment(long appId, String appName, String storeName,
       String packageName, String storeTheme);
 
   Fragment newRateAndReviewsFragment(long appId, String appName, String storeName,
@@ -151,9 +142,7 @@ import java.util.List;
 
   Fragment newInviteFriendsFragment(InviteFriendsContract.View.OpenMode openMode, String tag);
 
-  Fragment newSpotShareFragment(boolean showToolbar);
-
-  Fragment newThankYouConnectingFragment(String tag);
+  @Deprecated Fragment newThankYouConnectingFragment(String tag);
 
   Fragment newTimeLineFollowersFragment(String storeTheme, String title, StoreContext storeContext);
 

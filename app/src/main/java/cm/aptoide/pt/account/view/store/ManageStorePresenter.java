@@ -1,6 +1,8 @@
 package cm.aptoide.pt.account.view.store;
 
 import android.net.Uri;
+import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.view.UriToPathResolver;
 import cm.aptoide.pt.account.view.exception.InvalidImageException;
 import cm.aptoide.pt.account.view.exception.SocialLinkException;
@@ -27,24 +29,29 @@ public class ManageStorePresenter implements Presenter {
 
   private final ManageStoreView view;
   private final CrashReport crashReport;
-  private final StoreManager storeManager;
   private final UriToPathResolver uriToPathResolver;
   private final String applicationPackageName;
   private final ManageStoreNavigator navigator;
   private final boolean goBackToHome;
   private final ManageStoreErrorMapper errorMapper;
+  private final AptoideAccountManager accountManager;
+  private final int requestCode;
+  private AccountAnalytics accountAnalytics;
 
   public ManageStorePresenter(ManageStoreView view, CrashReport crashReport,
-      StoreManager storeManager, UriToPathResolver uriToPathResolver, String applicationPackageName,
-      ManageStoreNavigator navigator, boolean goBackToHome, ManageStoreErrorMapper errorMapper) {
+      UriToPathResolver uriToPathResolver, String applicationPackageName,
+      ManageStoreNavigator navigator, boolean goBackToHome, ManageStoreErrorMapper errorMapper,
+      AptoideAccountManager accountManager, int requestCode, AccountAnalytics accountAnalytics) {
     this.view = view;
     this.crashReport = crashReport;
-    this.storeManager = storeManager;
     this.uriToPathResolver = uriToPathResolver;
     this.applicationPackageName = applicationPackageName;
     this.navigator = navigator;
     this.goBackToHome = goBackToHome;
     this.errorMapper = errorMapper;
+    this.accountManager = accountManager;
+    this.requestCode = requestCode;
+    this.accountAnalytics = accountAnalytics;
   }
 
   @Override public void present() {
@@ -56,8 +63,12 @@ public class ManageStorePresenter implements Presenter {
     view.getLifecycle()
         .filter(event -> event == View.LifecycleEvent.CREATE)
         .flatMap(__ -> view.cancelClick()
-            .doOnNext(__2 -> {
-              navigate();
+            .doOnNext(storeModel -> {
+              if (goBackToHome) {
+                accountAnalytics.createStore(storeModel.hasPicture(),
+                    AccountAnalytics.CreateStoreAction.SKIP);
+              }
+              navigate(false);
             }))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
@@ -80,9 +91,15 @@ public class ManageStorePresenter implements Presenter {
         .observeOn(Schedulers.io())
         .andThen(saveData(storeModel))
         .observeOn(AndroidSchedulers.mainThread())
+        .doOnCompleted(() -> {
+          if (goBackToHome) {
+            accountAnalytics.createStore(storeModel.hasPicture(),
+                AccountAnalytics.CreateStoreAction.CREATE);
+          }
+        })
         .doOnCompleted(() -> view.dismissWaitProgressBar())
         .doOnCompleted(() -> view.showSuccessMessage())
-        .doOnCompleted(() -> navigate())
+        .doOnCompleted(() -> navigate(true))
         .onErrorResumeNext(err -> Completable.fromAction(() -> {
           view.dismissWaitProgressBar();
           handleStoreCreationErrors(err);
@@ -97,19 +114,19 @@ public class ManageStorePresenter implements Presenter {
       return "";
     })
         .flatMapCompletable(
-            mediaStoragePath -> storeManager.createOrUpdate(storeModel.getStoreName(),
+            mediaStoragePath -> accountManager.createOrUpdate(storeModel.getStoreName(),
                 storeModel.getStoreDescription(), mediaStoragePath, storeModel.hasNewAvatar(),
                 storeModel.getStoreTheme()
                     .getThemeName(), storeModel.storeExists(), storeModel.getSocialLinks(),
                 storeModel.getSocialDeleteLinks()));
   }
 
-  private void navigate() {
+  private void navigate(boolean success) {
     if (goBackToHome) {
       navigator.goToHome();
       return;
     }
-    navigator.goBack();
+    navigator.popViewWithResult(requestCode, success);
   }
 
   private void handleStoreCreationErrors(Throwable err) {

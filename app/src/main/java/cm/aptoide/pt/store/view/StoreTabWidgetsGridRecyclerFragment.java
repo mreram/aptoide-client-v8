@@ -11,7 +11,8 @@ import android.support.annotation.Nullable;
 import android.view.WindowManager;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.dataprovider.WebService;
@@ -20,6 +21,7 @@ import cm.aptoide.pt.dataprovider.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.install.InstalledRepository;
+import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.store.StoreCredentialsProvider;
@@ -27,8 +29,8 @@ import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreUtilsProxy;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
 import cm.aptoide.pt.view.recycler.displayable.DisplayablesFactory;
-import com.facebook.appevents.AppEventsLogger;
 import java.util.List;
+import javax.inject.Inject;
 import okhttp3.OkHttpClient;
 import rx.Observable;
 
@@ -41,9 +43,15 @@ public abstract class StoreTabWidgetsGridRecyclerFragment extends StoreTabGridRe
   protected StoreUtilsProxy storeUtilsProxy;
   protected InstalledRepository installedRepository;
   protected StoreAnalytics storeAnalytics;
+  protected NavigationTracker navigationTracker;
+  @Inject AnalyticsManager analyticsManager;
+  private StoreTabNavigator storeTabNavigator;
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
+    navigationTracker =
+        ((AptoideApplication) getContext().getApplicationContext()).getNavigationTracker();
     final StoreCredentialsProvider storeCredentialsProvider = new StoreCredentialsProviderImpl(
         AccessorFactory.getAccessorFor(((AptoideApplication) getContext().getApplicationContext()
             .getApplicationContext()).getDatabase(), Store.class));
@@ -62,19 +70,27 @@ public abstract class StoreTabWidgetsGridRecyclerFragment extends StoreTabGridRe
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences());
     installedRepository =
         RepositoryFactory.getInstalledRepository(getContext().getApplicationContext());
-    storeAnalytics =
-        new StoreAnalytics(AppEventsLogger.newLogger(getContext().getApplicationContext()),
-            Analytics.getInstance());
+    storeAnalytics = new StoreAnalytics(analyticsManager, navigationTracker);
+    storeTabNavigator = new StoreTabNavigator(getFragmentNavigator());
   }
 
   protected Observable<List<Displayable>> parseDisplayables(GetStoreWidgets getStoreWidgets) {
     return Observable.from(getStoreWidgets.getDataList()
         .getList())
-        .concatMapEager(wsWidget -> DisplayablesFactory.parse(wsWidget, storeTheme, storeRepository,
-            storeContext, getContext(), accountManager, storeUtilsProxy,
-            (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE),
-            getContext().getResources(), installedRepository, storeAnalytics, storeTabNavigator,
-            navigationTracker, new BadgeDialogFactory(getContext())))
+        .concatMapEager(wsWidget -> {
+          AptoideApplication application =
+              (AptoideApplication) getContext().getApplicationContext();
+          return DisplayablesFactory.parse(wsWidget, storeTheme, storeRepository, storeContext,
+              getContext(), accountManager, storeUtilsProxy,
+              (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE),
+              getContext().getResources(), installedRepository, storeAnalytics, storeTabNavigator,
+              navigationTracker, new BadgeDialogFactory(getContext()),
+              ((ActivityResultNavigator) getContext()).getFragmentNavigator(),
+              AccessorFactory.getAccessorFor(application.getDatabase(), Store.class),
+              application.getBodyInterceptorPoolV7(), application.getDefaultClient(),
+              WebService.getDefaultConverter(), application.getTokenInvalidator(),
+              application.getDefaultSharedPreferences());
+        })
         .toList()
         .first();
   }

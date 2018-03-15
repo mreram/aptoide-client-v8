@@ -8,8 +8,9 @@ import android.view.MenuItem;
 import android.view.View;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;
 import cm.aptoide.pt.dataprovider.WebService;
@@ -26,9 +27,9 @@ import cm.aptoide.pt.store.StoreUtils;
 import cm.aptoide.pt.view.fragment.GridRecyclerSwipeFragment;
 import cm.aptoide.pt.view.recycler.EndlessRecyclerOnScrollListener;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
-import com.facebook.appevents.AppEventsLogger;
 import java.util.LinkedList;
 import java.util.List;
+import javax.inject.Inject;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.functions.Action1;
@@ -38,7 +39,8 @@ public class LatestReviewsFragment extends GridRecyclerSwipeFragment {
   private static final int REVIEWS_LIMIT = 25;
   private static final String STORE_ID = "storeId";
   private static final String STORE_CONTEXT = "STORE_CONTEXT";
-
+  @Inject AnalyticsManager analyticsManager;
+  @Inject NavigationTracker navigationTracker;
   private long storeId;
   private EndlessRecyclerOnScrollListener endlessRecyclerOnScrollListener;
   private List<Displayable> displayables;
@@ -60,6 +62,7 @@ public class LatestReviewsFragment extends GridRecyclerSwipeFragment {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
     storeCredentialsProvider = new StoreCredentialsProviderImpl(AccessorFactory.getAccessorFor(
         ((AptoideApplication) getContext().getApplicationContext()
             .getApplicationContext()).getDatabase(), Store.class));
@@ -67,9 +70,7 @@ public class LatestReviewsFragment extends GridRecyclerSwipeFragment {
         ((AptoideApplication) getContext().getApplicationContext()).getAccountSettingsBodyInterceptorPoolV7();
     httpClient = ((AptoideApplication) getContext().getApplicationContext()).getDefaultClient();
     converterFactory = WebService.getDefaultConverter();
-    storeAnalytics =
-        new StoreAnalytics(AppEventsLogger.newLogger(getContext().getApplicationContext()),
-            Analytics.getInstance());
+    storeAnalytics = new StoreAnalytics(analyticsManager, navigationTracker);
     setHasOptionsMenu(true);
   }
 
@@ -129,9 +130,9 @@ public class LatestReviewsFragment extends GridRecyclerSwipeFragment {
       getRecyclerView().clearOnScrollListeners();
       endlessRecyclerOnScrollListener =
           new EndlessRecyclerOnScrollListener(this.getAdapter(), listFullReviewsRequest,
-              listFullReviewsAction, err -> err.printStackTrace(), true);
+              listFullReviewsAction, err -> err.printStackTrace(), true, refresh);
       getRecyclerView().addOnScrollListener(endlessRecyclerOnScrollListener);
-      endlessRecyclerOnScrollListener.onLoadMore(refresh);
+      endlessRecyclerOnScrollListener.onLoadMore(refresh, refresh);
     } else {
       getRecyclerView().addOnScrollListener(endlessRecyclerOnScrollListener);
     }

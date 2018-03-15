@@ -16,10 +16,10 @@ import android.widget.TextView;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
+import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.ErrorsMapper;
 import cm.aptoide.pt.account.view.AccountErrorMapper;
 import cm.aptoide.pt.account.view.GooglePlayServicesFragment;
-import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
@@ -32,6 +32,7 @@ import cm.aptoide.pt.view.rx.RxAlertDialog;
 import com.jakewharton.rxbinding.view.RxView;
 import com.jakewharton.rxrelay.PublishRelay;
 import java.util.Arrays;
+import javax.inject.Inject;
 import rx.Observable;
 
 public class NotLoggedInShareFragment extends GooglePlayServicesFragment
@@ -40,7 +41,7 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
   private static final String APP_NAME = "app_name";
   private static final String APP_ICON = "app_title";
   private static final String APP_RATING = "app_rating";
-
+  @Inject AccountAnalytics accountAnalytics;
   private ProgressDialog progressDialog;
   private Button facebookLoginButton;
   private Button googleLoginButton;
@@ -73,6 +74,7 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
     errorMapper = new AccountErrorMapper(getContext(), new ErrorsMapper());
     accountManager =
         ((AptoideApplication) getContext().getApplicationContext()).getAccountManager();
@@ -137,8 +139,8 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
         ((AptoideApplication) getContext().getApplicationContext()).getNotLoggedInShareAnalytics()));
   }
 
-  private Analytics.Account.StartupClickOrigin getStartupClickOrigin() {
-    return Analytics.Account.StartupClickOrigin.NOT_LOGGED_IN_DIALOG;
+  private AccountAnalytics.StartupClickOrigin getStartupClickOrigin() {
+    return AccountAnalytics.StartupClickOrigin.NOT_LOGGED_IN_DIALOG;
   }
 
   private View getRootView() {
@@ -151,13 +153,13 @@ public class NotLoggedInShareFragment extends GooglePlayServicesFragment
 
   @Override public Observable<Void> facebookSignUpEvent() {
     return RxView.clicks(facebookLoginButton)
-        .doOnNext(__ -> Analytics.Account.clickIn(Analytics.Account.StartupClick.CONNECT_FACEBOOK,
+        .doOnNext(__ -> accountAnalytics.clickIn(AccountAnalytics.StartupClick.CONNECT_FACEBOOK,
             getStartupClickOrigin()));
   }
 
   @Override public Observable<Void> googleSignUpEvent() {
     return RxView.clicks(googleLoginButton)
-        .doOnNext(__ -> Analytics.Account.clickIn(Analytics.Account.StartupClick.CONNECT_GOOGLE,
+        .doOnNext(__ -> accountAnalytics.clickIn(AccountAnalytics.StartupClick.CONNECT_GOOGLE,
             getStartupClickOrigin()));
   }
 

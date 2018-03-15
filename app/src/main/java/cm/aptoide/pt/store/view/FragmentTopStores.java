@@ -6,8 +6,9 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.dataprovider.interfaces.SuccessRequestListener;
 import cm.aptoide.pt.dataprovider.model.v7.store.ListStores;
@@ -19,10 +20,10 @@ import cm.aptoide.pt.view.fragment.AptoideBaseFragment;
 import cm.aptoide.pt.view.recycler.BaseAdapter;
 import cm.aptoide.pt.view.recycler.EndlessRecyclerOnScrollListener;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
-import com.facebook.appevents.AppEventsLogger;
 import com.trello.rxlifecycle.android.FragmentEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 import rx.Observable;
 
 /**
@@ -32,6 +33,8 @@ public class FragmentTopStores extends AptoideBaseFragment<BaseAdapter> implemen
 
   public static final int STORES_LIMIT_PER_REQUEST = 10;
   public static String TAG = FragmentTopStores.class.getSimpleName();
+  @Inject AnalyticsManager analyticsManager;
+  @Inject NavigationTracker navigationTracker;
   private int offset = 0;
   private StoreAnalytics storeAnalytics;
   private SuccessRequestListener<ListStores> listener =
@@ -48,8 +51,8 @@ public class FragmentTopStores extends AptoideBaseFragment<BaseAdapter> implemen
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    storeAnalytics =
-        new StoreAnalytics(AppEventsLogger.newLogger(getContext()), Analytics.getInstance());
+    getFragmentComponent(savedInstanceState).inject(this);
+    storeAnalytics = new StoreAnalytics(analyticsManager, navigationTracker);
     setHasOptionsMenu(true);
   }
 
@@ -89,7 +92,7 @@ public class FragmentTopStores extends AptoideBaseFragment<BaseAdapter> implemen
         new EndlessRecyclerOnScrollListener(this.getAdapter(), listStoresRequest, listener,
             err -> err.printStackTrace());
     getRecyclerView().addOnScrollListener(endlessRecyclerOnScrollListener);
-    endlessRecyclerOnScrollListener.onLoadMore(false);
+    endlessRecyclerOnScrollListener.onLoadMore(false, false);
   }
 
   @Override protected boolean displayHomeUpAsEnabled() {

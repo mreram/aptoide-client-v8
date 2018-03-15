@@ -10,15 +10,15 @@ import android.view.View;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.PageViewsAnalytics;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.Analytics;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.notification.AptoideNotification;
 import cm.aptoide.pt.view.fragment.BaseToolbarFragment;
-import com.facebook.appevents.AppEventsLogger;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.subjects.PublishSubject;
@@ -29,9 +29,9 @@ import rx.subjects.PublishSubject;
 
 public class InboxFragment extends BaseToolbarFragment implements InboxView {
 
+  @Inject AnalyticsManager analyticsManager;
   private RecyclerView list;
   private InboxAdapter adapter;
-
   private PublishSubject<AptoideNotification> notificationSubject;
 
   @Override public boolean onOptionsItemSelected(MenuItem item) {
@@ -52,6 +52,7 @@ public class InboxFragment extends BaseToolbarFragment implements InboxView {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
     notificationSubject = PublishSubject.create();
     adapter = new InboxAdapter(Collections.emptyList(), notificationSubject);
     setHasOptionsMenu(true);
@@ -69,9 +70,8 @@ public class InboxFragment extends BaseToolbarFragment implements InboxView {
             ((AptoideApplication) getContext().getApplicationContext()).getNotificationCenter(),
             CrashReport.getInstance(),
             ((AptoideApplication) getContext().getApplicationContext()).getNavigationTracker(),
-            application.getNotificationAnalytics(),
-            new PageViewsAnalytics(AppEventsLogger.newLogger(getContext().getApplicationContext()),
-                Analytics.getInstance(), navigationTracker), AndroidSchedulers.mainThread()));
+            application.getNotificationAnalytics(), new PageViewsAnalytics(analyticsManager),
+            AndroidSchedulers.mainThread()));
   }
 
   @Override public void showNotifications(List<AptoideNotification> notifications) {

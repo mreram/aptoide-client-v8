@@ -1,12 +1,9 @@
 package cm.aptoide.pt.store.view.home;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -15,6 +12,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -24,18 +22,15 @@ import cm.aptoide.accountmanager.Account;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.DrawerAnalytics;
-import cm.aptoide.pt.PageViewsAnalytics;
 import cm.aptoide.pt.R;
+import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.view.AccountNavigator;
-import cm.aptoide.pt.analytics.Analytics;
+import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.app.view.AppViewFragment;
+import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.crashreports.CrashReport;
-import cm.aptoide.pt.crashreports.IssuesAnalytics;
 import cm.aptoide.pt.dataprovider.model.v7.Event;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
-import cm.aptoide.pt.install.InstalledRepository;
-import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.navigator.TabNavigation;
@@ -43,35 +38,37 @@ import cm.aptoide.pt.navigator.TabNavigator;
 import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.search.SearchNavigator;
-import cm.aptoide.pt.search.view.SearchBuilder;
-import cm.aptoide.pt.spotandshare.view.SpotSharePreviewActivity;
+import cm.aptoide.pt.search.SuggestionCursorAdapter;
+import cm.aptoide.pt.search.analytics.SearchAnalytics;
+import cm.aptoide.pt.search.suggestions.TrendingManager;
+import cm.aptoide.pt.search.view.AppSearchSuggestionsView;
+import cm.aptoide.pt.search.view.SearchSuggestionsPresenter;
 import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.store.view.StoreFragment;
 import cm.aptoide.pt.store.view.StorePagerAdapter;
 import cm.aptoide.pt.updates.UpdateRepository;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.view.custom.BadgeView;
-import com.crashlytics.android.answers.Answers;
-import com.facebook.appevents.AppEventsLogger;
+import com.jakewharton.rxbinding.support.v7.widget.RxToolbar;
+import com.jakewharton.rxbinding.view.RxView;
 import com.trello.rxlifecycle.android.FragmentEvent;
+import java.io.File;
 import java.text.NumberFormat;
+import javax.inject.Inject;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
+import rx.subjects.PublishSubject;
 
 /**
  * Created by neuro on 09-05-2016.
  */
 public class HomeFragment extends StoreFragment {
 
-  public static final String APTOIDE_FACEBOOK_LINK = "http://www.facebook.com/aptoide";
   public static final String FACEBOOK_PACKAGE_NAME = "com.facebook.katana";
-  public static final String BACKUP_APPS_PACKAGE_NAME = "pt.aptoide.backupapps";
-  public static final String TWITTER_PACKAGE_NAME = "com.twitter.android";
-  public static final String APTOIDE_TWITTER_URL = "http://www.twitter.com/aptoide";
 
-  //private static final int SPOT_SHARE_PERMISSION_REQUEST_CODE = 6531;
-  private static final String TAG = HomeFragment.class.getName();
+  @Inject AnalyticsManager analyticsManager;
+  @Inject NavigationTracker navigationTracker;
   private DrawerLayout drawerLayout;
   private NavigationView navigationView;
   private BadgeView updatesBadge;
@@ -83,13 +80,15 @@ public class HomeFragment extends StoreFragment {
   private TextView userEmail;
   private TextView userUsername;
   private ImageView userAvatarImage;
-  private InstalledRepository installedRepository;
   private DrawerAnalytics drawerAnalytics;
   private ClickHandler backClickHandler;
-  private PageViewsAnalytics pageViewsAnalytics;
-  private SearchBuilder searchBuilder;
   private String defaultThemeName;
-  private IssuesAnalytics issuesAnalytics;
+  private String cacheDirectoryPath;
+  private AppSearchSuggestionsView appSearchSuggestionsView;
+  private CrashReport crashReport;
+  private SearchNavigator searchNavigator;
+  private TrendingManager trendingManager;
+  private SearchAnalytics searchAnalytics;
 
   public static HomeFragment newInstance(String storeName, StoreContext storeContext,
       String storeTheme) {
@@ -173,37 +172,30 @@ public class HomeFragment extends StoreFragment {
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
+    getFragmentComponent(savedInstanceState).inject(this);
     final AptoideApplication application =
         (AptoideApplication) getContext().getApplicationContext();
-
+    cacheDirectoryPath = getContext().getApplicationContext()
+        .getCacheDir()
+        .getPath();
     defaultThemeName = application.getDefaultThemeName();
-    final SearchManager searchManager =
-        (SearchManager) getContext().getSystemService(Context.SEARCH_SERVICE);
 
-    final SearchNavigator searchNavigator =
-        new SearchNavigator(getFragmentNavigator(), application.getDefaultStoreName());
+    searchNavigator = new SearchNavigator(getFragmentNavigator(), defaultThemeName);
 
-    final Analytics analytics = Analytics.getInstance();
-    issuesAnalytics = new IssuesAnalytics(analytics, Answers.getInstance());
+    trendingManager = application.getTrendingManager();
 
-    searchBuilder = new SearchBuilder(searchManager, searchNavigator);
+    crashReport = CrashReport.getInstance();
 
-    drawerAnalytics = new DrawerAnalytics(analytics,
-        AppEventsLogger.newLogger(getContext().getApplicationContext()));
-    installedRepository =
-        RepositoryFactory.getInstalledRepository(getContext().getApplicationContext());
-    pageViewsAnalytics =
-        new PageViewsAnalytics(AppEventsLogger.newLogger(getContext().getApplicationContext()),
-            analytics, navigationTracker);
+    drawerAnalytics = new DrawerAnalytics(analyticsManager, navigationTracker);
+
+    searchAnalytics = new SearchAnalytics(analyticsManager, navigationTracker);
+
     setRegisterFragment(false);
     setHasOptionsMenu(true);
   }
 
-  @Nullable @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
-      @Nullable Bundle savedInstanceState) {
-    return super.onCreateView(inflater, container, savedInstanceState);
+  protected boolean hasSearchFromStoreFragment() {
+    return false;
   }
 
   @Override public void onDestroyView() {
@@ -281,31 +273,59 @@ public class HomeFragment extends StoreFragment {
 
   @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
     super.onCreateOptionsMenu(menu, inflater);
-    menu.removeItem(R.id.menu_share);
-    if (searchBuilder != null && searchBuilder.isValid()) {
-      final FragmentActivity activity = getActivity();
-      // from getActivity() "May return null if the fragment is associated with a Context instead."
-      final Context context = getContext();
-      if (activity != null) {
-        searchBuilder.attachSearch(activity, menu.findItem(R.id.action_search));
-        issuesAnalytics.attachSearchSuccess(false);
-        return;
-      } else if (context != null) {
-        searchBuilder.attachSearch(context, menu.findItem(R.id.action_search));
-        issuesAnalytics.attachSearchSuccess(true);
-        return;
-      } else {
-        issuesAnalytics.attachSearchFailed(true);
-        Logger.e(TAG, new IllegalStateException(
-            "Unable to attach search to this fragment due to null parent"));
-      }
-    } else {
-      issuesAnalytics.attachSearchFailed(false);
-      Logger.e(TAG, new IllegalStateException(
-          "Unable to attach search to this fragment due to invalid search builder"));
-    }
+    inflater.inflate(R.menu.fragment_home, menu);
 
-    menu.removeItem(R.id.action_search);
+    final MenuItem menuItem = menu.findItem(R.id.menu_item_search);
+    if (appSearchSuggestionsView != null && menuItem != null) {
+      appSearchSuggestionsView.initialize(menuItem);
+    } else if (menuItem != null) {
+      menuItem.setVisible(false);
+    } else {
+      menu.removeItem(R.id.menu_item_search);
+    }
+  }
+
+  @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+    backClickHandler = () -> {
+      if (isDrawerOpened()) {
+        closeDrawer();
+        return true;
+      }
+
+      return false;
+    };
+    registerClickHandler(backClickHandler);
+
+    final SuggestionCursorAdapter suggestionCursorAdapter =
+        new SuggestionCursorAdapter(getContext());
+
+    final Toolbar toolbar = getToolbar();
+    final Observable<MenuItem> toolbarMenuItemClick = RxToolbar.itemClicks(toolbar)
+        .publish()
+        .autoConnect();
+
+    appSearchSuggestionsView =
+        new AppSearchSuggestionsView(this, RxView.clicks(toolbar), crashReport,
+            suggestionCursorAdapter, PublishSubject.create(), toolbarMenuItemClick,
+            searchAnalytics);
+
+    final AptoideApplication application =
+        (AptoideApplication) getContext().getApplicationContext();
+
+    final SearchSuggestionsPresenter searchSuggestionsPresenter =
+        new SearchSuggestionsPresenter(appSearchSuggestionsView,
+            application.getSearchSuggestionManager(), AndroidSchedulers.mainThread(),
+            suggestionCursorAdapter, crashReport, trendingManager, searchNavigator, false,
+            searchAnalytics);
+
+    attachPresenter(searchSuggestionsPresenter);
+  }
+
+  @Nullable @Override
+  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+      @Nullable Bundle savedInstanceState) {
+    return super.onCreateView(inflater, container, savedInstanceState);
   }
 
   protected boolean displayHomeUpAsEnabled() {
@@ -319,7 +339,6 @@ public class HomeFragment extends StoreFragment {
       drawerLayout.openDrawer(GravityCompat.START);
       drawerAnalytics.drawerOpen();
       navigationTracker.registerScreen(ScreenTagHistory.Builder.build("Drawer"));
-      pageViewsAnalytics.sendPageViewedEvent();
     });
   }
 
@@ -340,54 +359,19 @@ public class HomeFragment extends StoreFragment {
     return null;
   }
 
-  @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
-    backClickHandler = new ClickHandler() {
-      @Override public boolean handle() {
-        if (isDrawerOpened()) {
-          closeDrawer();
-          return true;
-        }
-
-        return false;
-      }
-    };
-    registerClickHandler(backClickHandler);
-  }
-
   private void setupNavigationView() {
     if (navigationView != null) {
 
-      try {
-        //TODO emoji did not work on xml file. this sould be deleted in the next release
-        navigationView.getMenu()
-            .findItem(R.id.shareapps)
-            .setTitle(getString(R.string.spot_share) + new String(" \uD83D\uDD38"));
-      } catch (Exception e) {
-        CrashReport.getInstance()
-            .log(e);
-      }
       navigationView.setItemIconTintList(null);
       navigationView.setNavigationItemSelectedListener(menuItem -> {
 
         int itemId = menuItem.getItemId();
         if (itemId == R.id.navigation_item_my_account) {
           drawerAnalytics.drawerInteract("My Account");
-          accountNavigator.navigateToAccountView(Analytics.Account.AccountOrigins.MY_ACCOUNT);
+          accountNavigator.navigateToAccountView(AccountAnalytics.AccountOrigins.MY_ACCOUNT);
         } else {
           final FragmentNavigator navigator = getFragmentNavigator();
-          if (itemId == R.id.shareapps) {
-            drawerAnalytics.drawerInteract("Spot&Share");
-            getActivityNavigator().navigateTo(SpotSharePreviewActivity.class);
-          } else if (itemId == R.id.navigation_item_rollback) {
-            drawerAnalytics.drawerInteract("Rollback");
-            navigator.navigateTo(AptoideApplication.getFragmentProvider()
-                .newRollbackFragment(), true);
-          } else if (itemId == R.id.navigation_item_setting_scheduled_downloads) {
-            drawerAnalytics.drawerInteract("Scheduled Downloads");
-            navigator.navigateTo(AptoideApplication.getFragmentProvider()
-                .newScheduledDownloadsFragment(), true);
-          } else if (itemId == R.id.navigation_item_excluded_updates) {
+          if (itemId == R.id.navigation_item_excluded_updates) {
             drawerAnalytics.drawerInteract("Excluded Updates");
             navigator.navigateTo(AptoideApplication.getFragmentProvider()
                 .newExcludedUpdatesFragment(), true);
@@ -395,15 +379,6 @@ public class HomeFragment extends StoreFragment {
             drawerAnalytics.drawerInteract("Settings");
             navigator.navigateTo(AptoideApplication.getFragmentProvider()
                 .newSettingsFragment(), true);
-          } else if (itemId == R.id.navigation_item_facebook) {
-            drawerAnalytics.drawerInteract("Facebook");
-            openFacebook();
-          } else if (itemId == R.id.navigation_item_twitter) {
-            drawerAnalytics.drawerInteract("Twitter");
-            openTwitter();
-          } else if (itemId == R.id.navigation_item_backup_apps) {
-            drawerAnalytics.drawerInteract("Backup Apps");
-            openBackupApps();
           } else if (itemId == R.id.send_feedback) {
             drawerAnalytics.drawerInteract("Send Feedback");
             startFeedbackFragment();
@@ -417,82 +392,13 @@ public class HomeFragment extends StoreFragment {
     }
   }
 
-  private void openFacebook() {
-
-    installedRepository.getInstalled(FACEBOOK_PACKAGE_NAME)
-        .first()
-        .compose(bindUntilEvent(LifecycleEvent.DESTROY))
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(installedFacebook -> {
-          openSocialLink(FACEBOOK_PACKAGE_NAME, APTOIDE_FACEBOOK_LINK,
-              getContext().getString(R.string.social_facebook_screen_title), Uri.parse(
-                  AptoideUtils.SocialLinksU.getFacebookPageURL(
-                      installedFacebook == null ? 0 : installedFacebook.getVersionCode(),
-                      APTOIDE_FACEBOOK_LINK)));
-        }, err -> {
-          CrashReport.getInstance()
-              .log(err);
-        });
-  }
-
-  private void openTwitter() {
-    openSocialLink(TWITTER_PACKAGE_NAME, APTOIDE_TWITTER_URL,
-        getContext().getString(R.string.social_twitter_screen_title),
-        Uri.parse(APTOIDE_TWITTER_URL));
-  }
-
-  private void openBackupApps() {
-
-    installedRepository.getInstalled(BACKUP_APPS_PACKAGE_NAME)
-        .first()
-        .observeOn(AndroidSchedulers.mainThread())
-        .compose(bindUntilEvent(LifecycleEvent.DESTROY))
-        .subscribe(installed -> {
-          if (installed == null) {
-            getFragmentNavigator().navigateTo(AptoideApplication.getFragmentProvider()
-                    .newAppViewFragment(BACKUP_APPS_PACKAGE_NAME, AppViewFragment.OpenType.OPEN_ONLY),
-                true);
-          } else {
-            Intent i = getContext().getPackageManager()
-                .getLaunchIntentForPackage(BACKUP_APPS_PACKAGE_NAME);
-            startActivity(i);
-          }
-        }, err -> {
-          CrashReport.getInstance()
-              .log(err);
-        });
-  }
-
   private void startFeedbackFragment() {
-    String downloadFolderPath = getContext().getApplicationContext()
-        .getCacheDir()
-        .getPath();
     String screenshotFileName = getActivity().getClass()
         .getSimpleName() + ".jpg";
-    AptoideUtils.ScreenU.takeScreenshot(getActivity(), downloadFolderPath, screenshotFileName);
+    File screenshot =
+        AptoideUtils.ScreenU.takeScreenshot(getActivity(), cacheDirectoryPath, screenshotFileName);
     getFragmentNavigator().navigateTo(AptoideApplication.getFragmentProvider()
-        .newSendFeedbackFragment(downloadFolderPath + screenshotFileName), true);
-  }
-
-  private void openSocialLink(String packageName, String socialUrl, String pageTitle,
-      Uri uriToOpenApp) {
-
-    installedRepository.getInstalled(packageName)
-        .first()
-        .observeOn(AndroidSchedulers.mainThread())
-        .compose(bindUntilEvent(FragmentEvent.DESTROY_VIEW))
-        .subscribe(installedFacebook -> {
-          if (installedFacebook == null) {
-            getFragmentNavigator().navigateTo(AptoideApplication.getFragmentProvider()
-                .newSocialFragment(socialUrl, pageTitle), true);
-          } else {
-            Intent sharingIntent = new Intent(Intent.ACTION_VIEW, uriToOpenApp);
-            getContext().startActivity(sharingIntent);
-          }
-        }, err -> {
-          CrashReport.getInstance()
-              .log(err);
-        });
+        .newSendFeedbackFragment(screenshot.getAbsolutePath()), true);
   }
 
   public void refreshBadge(int num, BadgeView badgeToUpdate) {
@@ -523,6 +429,7 @@ public class HomeFragment extends StoreFragment {
       case TabNavigation.STORES:
         return Event.Name.myStores;
       case TabNavigation.TIMELINE:
+      case TabNavigation.COMMENTS:
         return Event.Name.getUserTimeline;
       case TabNavigation.UPDATES:
         return Event.Name.myUpdates;
@@ -547,8 +454,6 @@ public class HomeFragment extends StoreFragment {
 
     navigationView = (NavigationView) view.findViewById(R.id.nav_view);
     drawerLayout = (DrawerLayout) view.findViewById(R.id.drawer_layout);
-
-    setHasOptionsMenu(true);
   }
 
   private enum BundleKeys {

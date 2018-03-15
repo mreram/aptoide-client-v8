@@ -12,7 +12,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import cm.aptoide.pt.AptoideApplication;
-import cm.aptoide.pt.analytics.NavigationTracker;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.navigator.ActivityNavigator;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
@@ -21,19 +20,18 @@ import cm.aptoide.pt.navigator.FragmentResultNavigator;
 import cm.aptoide.pt.presenter.Presenter;
 import cm.aptoide.pt.presenter.View;
 import cm.aptoide.pt.util.ScreenTrackingUtils;
+import cm.aptoide.pt.view.BaseFragment;
 import cm.aptoide.pt.view.MainActivity;
-import cm.aptoide.pt.view.leak.LeakFragment;
 import com.trello.rxlifecycle.LifecycleTransformer;
 import com.trello.rxlifecycle.RxLifecycle;
 import com.trello.rxlifecycle.android.FragmentEvent;
 import rx.Observable;
 
-public abstract class FragmentView extends LeakFragment implements View {
+public abstract class FragmentView extends BaseFragment implements View {
 
   private static final String TAG = FragmentView.class.getName();
 
   private boolean startActivityForResultCalled;
-  private NavigationTracker navigationTracker;
   private ActivityResultNavigator activityResultNavigator;
   private String defaultThemeName;
 
@@ -68,8 +66,6 @@ public abstract class FragmentView extends LeakFragment implements View {
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultThemeName();
     ScreenTrackingUtils.getInstance()
         .incrementNumberOfScreens();
-    navigationTracker =
-        ((AptoideApplication) getContext().getApplicationContext()).getNavigationTracker();
   }
 
   @Override public void onDestroy() {

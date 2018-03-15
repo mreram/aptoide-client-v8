@@ -1,15 +1,8 @@
 <resources>
   <!-- NavDrawer List items -->
   <string name="drawer_title_my_account">My Account</string>
-  <string name="drawer_title_spot_share">Spot&amp;Share</string>
-  <string name="drawer_title_rollback">Rollback</string>
-  <string name="drawer_title_schedule_download">Scheduled Downloads</string>
   <string name="drawer_title_settings">Settings</string>
-  <string name="drawer_title_backup_apps">Backup Apps</string>
 
-  <string name="drawer_social_media_title">Let\'s stay connected</string>
-  <string name="drawer_title_facebook">Facebook</string>
-  <string name="drawer_title_twitter">Twitter</string>
   <string name="drawer_title_feedback_send_button">Send feedback</string>
 
   <string name="feedback_subject">Subject</string>
@@ -68,12 +61,7 @@
   <!-- AppView developer area-->
   <string name="dialog_version_size">Version: %1$s | Size: %2$s</string>
 
-  <!-- Appview Share"-->
-  <string name="appview_message_install_before_share_spotandshare">Install app first</string>
-  <string name="appview_button_install_before_share_spotandshare">install</string>
 
-
-  <string name="uninstall">Uninstall</string>
   <string name="other_versions_downloads_count_text">%1$s   downloads</string>
 
   <!-- Common (menu) -->
@@ -82,9 +70,6 @@
   <string name="menu_select_none">Select None</string>
   <string name="clear">Clear</string>
 
-  <!--Scheduled Downloads-->
-  <string name="all_title_schedule_download">Scheduled Downloads</string>
-
   <!-- Excluded Updates Fragment -->
   <string name="excluded_updates">Excluded updates</string>
   <string name="no_excluded_updates_msg">Is the latest version not working? To prevent an app from updating, go to the Updates tab and long press it.</string>
@@ -92,11 +77,6 @@
   <!-- Excluded Updates Fragment (menu) -->
   <string name="restore_updates">Restore updates</string>
   <string name="open_apps_manager">Open apps manager</string>
-
-  <!-- Rollback Fragment -->
-  <string name="rollback">Rollback</string>
-  <string name="no_rollbacks_msg">Quickly downgrade any app to a previous version and solve incompatibility issues. Keep a log of all your installed
-        apps (via %s) including version and install date.</string>
 
   <string name="zero">0</string>
   <string name="working_well">Works well</string>
@@ -133,7 +113,6 @@
   <string name="installing_msg">Installing</string>
   <string name="needs_permission_to_fs">Needs permission to use the external file system</string>
 
-  <string name="added_to_scheduled">Added to Menu &gt; Scheduled Downloads</string>
   <string name="pause_all_downloads">Pause Downloads</string>
   <string name="storage_access_permission_request_message">Allow access to your phone\'s storage so we can download and install this app.</string>
   <string name="camera_access_permission_request_message">Allow access to your phone\'s camera so you can take pictures with this app.</string>
@@ -310,14 +289,11 @@
   <string name="comment_store">Comment Store</string>
   <string name="comment_store_title">Comments on this Store</string>
   <string name="be_the_first_to_send_feedback_about_this_store">Be the first to send feedback about this store</string>
-
-  <!-- Payments -->
   <string name="reviews_expand_button">%d Replies</string>
   <string name="out_of_space_dialog_title">Out of space</string>
   <string name="out_of_space_dialog_message">Free up some space to continue.</string>
   <string name="create_store_displayable_explore_long_term_button">View store</string>
   <string name="create_store_displayable_empty_description_message">Add a description to your store. A good description helps you to get more followers and interaction.</string>
-  <string name="fragment_spot_share_preview_start_button">Start</string>
 
   <!-- 02/2017 strings for login / sign up -->
   <string name="join_company">Join %s</string>
@@ -420,24 +396,13 @@
   <string name="download_retry">Retry</string>
   <string name="retry_connection">Retry connection</string>
   <string name="error503">Ufff… Is it just me or is everyone installing apps at the same time?</string>
-  <string name="having_some_trouble_v2">When offline you can still share apps with friends via Spot&amp;Share</string>
   <string name="could_not_connect_internet">couldn\'t connect to the Internet</string>
-  <string name="Share_apps_now">Share apps now</string>
 
   <!-- Vote -->
   <string name="reply">Reply</string>
   <string name="vote_submitted">Your vote was successfully submitted</string>
 
   <string name="reviewed_by">Reviewed by - %s</string>
-
-  <string name="schDown_nodownloadselect">No downloads selected</string>
-  <string name="no_sch_downloads">Don\'t worry about mobile date. Use scheduled downloads to transfer apps later when you\'re on Wi-Fi. Just change your preferences to Wi-Fi on Settings -&gt; Download Options.</string>
-  <string name="schDown_installselected">Install selected</string>
-  <string name="schDown_removeselected">Remove selected</string>
-
-  <string name="schDwnBtn">Schedule download</string>
-  <string name="schDown_install">Do you want to install all scheduled downloads?</string>
-
 
   <!-- Tab names -->
 
@@ -459,15 +424,7 @@
   <!-- Network -->
   <string name="no_excluded_updates_selected">No excluded updates selected</string>
 
-  <!-- Payments -->
-  <string name="buy">buy</string>
-  <string name="cancel">Cancel</string>
-  <string name="no_payments_available">No payments available.</string>
 
-  <string name="rollback_installed">Installed</string>
-  <string name="rollback_uninstalled">Uninstalled</string>
-  <string name="rollback_updated">Updated</string>
-  <string name="rollback_downgraded">Downgraded</string>
   <string name="at_time">at %s</string>
   <string name="root_access_dialog">It seems you have root. Would you like to allow auto install app after download?</string>
 
@@ -529,5 +486,36 @@
   <string name="storetab_short_followers">Followers\n%s</string>
   <string name="storetab_short_follow_error">An error occurred while following store</string>
   <string name="list_store_apps_fragment_title">Store Apps</string>
+
+  <!-- Payments -->
+  <string name="buy">buy</string>
+  <string name="cancel">Cancel</string>
+  <string name="no_payments_available">No payments available.</string>
+
+  <string name="iab_title_payment_methods">Payment methods</string>
+  <string name="iab_title_add_payment_method">Add payment method</string>
+  <string name="iab_title_add_card">Add card</string>
+  <string name="iab_title_purchase">Purchase</string>
+  <string name="iab_title_delete">Delete</string>
+  <string name="iab_button_next">Next</string>
+  <string name="iab_button_ok">OK</string>
+  <string name="iab_message_cvv">The CVV is the three-number code that appears in the signature bar on the back of your card.</string>
+  <string name="iab_title_payment_product_name">You\'re purchasing</string>
+  <string name="iab_title_price">Price</string>
+  <string name="iab_title_payment_method">Payment method</string>
+  <string name="iab_button_change">Change</string>
+  <string name="iab_button_buy">Buy</string>
+  <string name="iab_button_done">Done</string>
+  <string name="iab_button_retry">Retry</string>
+  <string name="iab_message_error_general">The purchase couldn\'t be completed</string>
+  <string name="iab_message_error_card">Provide your card information</string>
+
+  <!--Strings for shortcuts-->
+  <string name="shortcut_button_search">Search</string>
+  <string name="shortcut_button_timeline">Timeline</string>
+  <string name="shortcut_button_my_store">My Store</string>
+  <string name="shortcut_button_pick_app">Surprise me</string>
+
+  <string name="all_button_ok">OK</string>
 </resources>
 

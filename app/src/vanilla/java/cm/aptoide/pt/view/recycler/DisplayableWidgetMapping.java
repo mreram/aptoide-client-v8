@@ -52,8 +52,6 @@ import cm.aptoide.pt.download.view.active.ActiveDownloadsHeaderDisplayable;
 import cm.aptoide.pt.download.view.active.ActiveDownloadsHeaderWidget;
 import cm.aptoide.pt.download.view.completed.CompletedDownloadDisplayable;
 import cm.aptoide.pt.download.view.completed.CompletedDownloadWidget;
-import cm.aptoide.pt.download.view.scheduled.ScheduledDownloadDisplayable;
-import cm.aptoide.pt.download.view.scheduled.ScheduledDownloadWidget;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.reviews.ReviewsLanguageFilterDisplayable;
 import cm.aptoide.pt.reviews.ReviewsLanguageFilterWidget;
@@ -97,8 +95,6 @@ import cm.aptoide.pt.updates.view.excluded.ExcludedUpdateDisplayable;
 import cm.aptoide.pt.updates.view.excluded.ExcludedUpdateWidget;
 import cm.aptoide.pt.updates.view.installed.InstalledAppDisplayable;
 import cm.aptoide.pt.updates.view.installed.InstalledAppWidget;
-import cm.aptoide.pt.updates.view.rollback.RollbackDisplayable;
-import cm.aptoide.pt.updates.view.rollback.RollbackWidget;
 import cm.aptoide.pt.view.recycler.displayable.Displayable;
 import cm.aptoide.pt.view.recycler.displayable.EmptyDisplayable;
 import cm.aptoide.pt.view.recycler.displayable.FooterDisplayable;
@@ -202,9 +198,6 @@ public class DisplayableWidgetMapping {
         new DisplayableWidgetMapping(UpdatesHeaderWidget.class, UpdatesHeaderDisplayable.class));
 
     displayableWidgetMappings.add(
-        new DisplayableWidgetMapping(RollbackWidget.class, RollbackDisplayable.class));
-
-    displayableWidgetMappings.add(
         new DisplayableWidgetMapping(AdultRowWidget.class, AdultRowDisplayable.class));
 
     // Loading
@@ -253,9 +246,6 @@ public class DisplayableWidgetMapping {
 
     displayableWidgetMappings.add(new DisplayableWidgetMapping(RateAndReviewCommentWidget.class,
         RateAndReviewCommentDisplayable.class));
-
-    displayableWidgetMappings.add(new DisplayableWidgetMapping(ScheduledDownloadWidget.class,
-        ScheduledDownloadDisplayable.class));
 
     displayableWidgetMappings.add(new DisplayableWidgetMapping(CompletedDownloadWidget.class,
         CompletedDownloadDisplayable.class));
