@@ -1,7 +1,10 @@
 package cm.aptoide.pt.view;
 
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.view.WindowManager;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.ErrorsMapper;
@@ -17,19 +20,81 @@ import cm.aptoide.pt.account.view.store.ManageStoreErrorMapper;
 import cm.aptoide.pt.account.view.store.ManageStoreNavigator;
 import cm.aptoide.pt.account.view.store.ManageStorePresenter;
 import cm.aptoide.pt.account.view.store.ManageStoreView;
+import cm.aptoide.pt.account.view.store.StoreManager;
 import cm.aptoide.pt.account.view.user.CreateUserErrorMapper;
 import cm.aptoide.pt.account.view.user.ManageUserNavigator;
 import cm.aptoide.pt.account.view.user.ManageUserPresenter;
 import cm.aptoide.pt.account.view.user.ManageUserView;
+import cm.aptoide.pt.actions.PermissionManager;
+import cm.aptoide.pt.actions.PermissionService;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.AnalyticsManager;
+import cm.aptoide.pt.app.AdsManager;
+import cm.aptoide.pt.app.AppNavigator;
+import cm.aptoide.pt.app.AppViewAnalytics;
+import cm.aptoide.pt.app.AppViewManager;
+import cm.aptoide.pt.app.DownloadStateParser;
+import cm.aptoide.pt.app.FlagManager;
+import cm.aptoide.pt.app.FlagService;
+import cm.aptoide.pt.app.ReviewsManager;
+import cm.aptoide.pt.app.view.AppViewNavigator;
+import cm.aptoide.pt.app.view.AppViewPresenter;
+import cm.aptoide.pt.app.view.AppViewView;
+import cm.aptoide.pt.app.view.MoreBundleManager;
+import cm.aptoide.pt.app.view.MoreBundlePresenter;
+import cm.aptoide.pt.app.view.MoreBundleView;
+import cm.aptoide.pt.app.view.NewAppViewFragment;
+import cm.aptoide.pt.app.view.NewAppViewFragment.BundleKeys;
+import cm.aptoide.pt.appview.PreferencesManager;
+import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.crashreports.CrashReport;
+import cm.aptoide.pt.dataprovider.WebService;
+import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
+import cm.aptoide.pt.dataprovider.model.v7.Type;
+import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
+import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
+import cm.aptoide.pt.download.DownloadFactory;
+import cm.aptoide.pt.home.AdMapper;
+import cm.aptoide.pt.home.AptoideBottomNavigator;
+import cm.aptoide.pt.home.BottomNavigationMapper;
+import cm.aptoide.pt.home.BundlesRepository;
+import cm.aptoide.pt.home.GetRewardAppCoinsAppsNavigator;
+import cm.aptoide.pt.home.Home;
+import cm.aptoide.pt.home.HomeAnalytics;
+import cm.aptoide.pt.home.HomeNavigator;
+import cm.aptoide.pt.home.HomePresenter;
+import cm.aptoide.pt.home.HomeView;
+import cm.aptoide.pt.home.apps.AppsNavigator;
+import cm.aptoide.pt.install.InstallAnalytics;
+import cm.aptoide.pt.install.InstallManager;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.networking.image.ImageLoader;
+import cm.aptoide.pt.notification.NotificationAnalytics;
 import cm.aptoide.pt.permission.AccountPermissionProvider;
 import cm.aptoide.pt.presenter.LoginSignUpCredentialsPresenter;
 import cm.aptoide.pt.presenter.LoginSignUpCredentialsView;
+import cm.aptoide.pt.search.SearchManager;
+import cm.aptoide.pt.search.SearchNavigator;
+import cm.aptoide.pt.search.analytics.SearchAnalytics;
+import cm.aptoide.pt.search.suggestions.SearchSuggestionManager;
+import cm.aptoide.pt.search.suggestions.TrendingManager;
+import cm.aptoide.pt.search.view.SearchResultPresenter;
+import cm.aptoide.pt.search.view.SearchResultView;
+import cm.aptoide.pt.store.StoreAnalytics;
+import cm.aptoide.pt.store.StoreUtilsProxy;
+import cm.aptoide.pt.store.view.StoreTabGridRecyclerFragment.BundleCons;
+import cm.aptoide.pt.store.view.my.MyStoresNavigator;
+import cm.aptoide.pt.store.view.my.MyStoresPresenter;
+import cm.aptoide.pt.store.view.my.MyStoresView;
+import cm.aptoide.pt.timeline.SocialRepository;
+import cm.aptoide.pt.timeline.TimelineAnalytics;
+import cm.aptoide.pt.view.app.AppCenter;
 import dagger.Module;
 import dagger.Provides;
 import java.util.Arrays;
+import javax.inject.Named;
+import okhttp3.OkHttpClient;
+import org.parceler.Parcels;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -50,7 +115,7 @@ import rx.schedulers.Schedulers;
     this.packageName = packageName;
   }
 
-  @Provides @FragmentScope LoginSignUpCredentialsPresenter provideLoginSignUpPresenter(
+  @FragmentScope @Provides LoginSignUpCredentialsPresenter provideLoginSignUpPresenter(
       AptoideAccountManager accountManager, AccountNavigator accountNavigator,
       AccountErrorMapper errorMapper, AccountAnalytics accountAnalytics) {
     return new LoginSignUpCredentialsPresenter((LoginSignUpCredentialsView) fragment,
@@ -61,7 +126,7 @@ import rx.schedulers.Schedulers;
         accountAnalytics);
   }
 
-  @Provides @FragmentScope ImagePickerPresenter provideImagePickerPresenter(
+  @FragmentScope @Provides ImagePickerPresenter provideImagePickerPresenter(
       AccountPermissionProvider accountPermissionProvider, PhotoFileGenerator photoFileGenerator,
       ImageValidator imageValidator, UriToPathResolver uriToPathResolver,
       ImagePickerNavigator imagePickerNavigator) {
@@ -108,5 +173,145 @@ import rx.schedulers.Schedulers;
 
   @FragmentScope @Provides ManageStoreErrorMapper provideManageStoreErrorMapper() {
     return new ManageStoreErrorMapper(fragment.getResources(), new ErrorsMapper());
+  }
+
+  @FragmentScope @Provides SearchResultPresenter provideSearchResultPresenter(
+      SearchAnalytics searchAnalytics, SearchNavigator searchNavigator, SearchManager searchManager,
+      TrendingManager trendingManager, SearchSuggestionManager searchSuggestionManager,
+      BottomNavigationMapper bottomNavigationMapper) {
+    return new SearchResultPresenter((SearchResultView) fragment, searchAnalytics, searchNavigator,
+        CrashReport.getInstance(), AndroidSchedulers.mainThread(), searchManager, trendingManager,
+        searchSuggestionManager, (AptoideBottomNavigator) fragment.getActivity(),
+        bottomNavigationMapper);
+  }
+
+  @FragmentScope @Provides HomePresenter providesHomePresenter(Home home,
+      HomeNavigator homeNavigator, AdMapper adMapper, AptoideAccountManager aptoideAccountManager,
+      HomeAnalytics homeAnalytics) {
+    return new HomePresenter((HomeView) fragment, home, AndroidSchedulers.mainThread(),
+        CrashReport.getInstance(), homeNavigator, adMapper, aptoideAccountManager, homeAnalytics);
+  }
+
+  @FragmentScope @Provides HomeNavigator providesHomeNavigator(FragmentNavigator fragmentNavigator,
+      BottomNavigationMapper bottomNavigationMapper, AppNavigator appNavigator) {
+    return new HomeNavigator(fragmentNavigator, (AptoideBottomNavigator) fragment.getActivity(),
+        bottomNavigationMapper, appNavigator);
+  }
+
+  @FragmentScope @Provides Home providesHome(BundlesRepository bundlesRepository) {
+    return new Home(bundlesRepository);
+  }
+
+  @FragmentScope @Provides MyStoresPresenter providesMyStorePresenter(
+      AptoideAccountManager aptoideAccountManager, MyStoresNavigator navigator) {
+    return new MyStoresPresenter((MyStoresView) fragment, AndroidSchedulers.mainThread(),
+        aptoideAccountManager, navigator);
+  }
+
+  @FragmentScope @Provides MyStoresNavigator providesMyStoreNavigator(
+      FragmentNavigator fragmentNavigator, BottomNavigationMapper bottomNavigationMapper) {
+    return new MyStoresNavigator(fragmentNavigator, (AptoideBottomNavigator) fragment.getActivity(),
+        bottomNavigationMapper);
+  }
+
+  @FragmentScope @Provides HomeAnalytics providesHomeAnalytics(AnalyticsManager analyticsManager,
+      NavigationTracker navigationTracker) {
+    return new HomeAnalytics(navigationTracker, analyticsManager);
+  }
+
+  @FragmentScope @Provides AppsNavigator providesAppsNavigator(FragmentNavigator fragmentNavigator,
+      BottomNavigationMapper bottomNavigationMapper, AppNavigator appNavigator) {
+    return new AppsNavigator(fragmentNavigator, (AptoideBottomNavigator) fragment.getActivity(),
+        bottomNavigationMapper, appNavigator);
+  }
+
+  @FragmentScope @Provides GetRewardAppCoinsAppsNavigator providesGetRewardAppCoinsAppsNavigator(
+      FragmentNavigator fragmentNavigator, AppNavigator appNavigator) {
+    return new GetRewardAppCoinsAppsNavigator(fragmentNavigator, appNavigator);
+  }
+
+  @FragmentScope @Provides FlagManager providesFlagManager(FlagService flagService) {
+    return new FlagManager(flagService);
+  }
+
+  @FragmentScope @Provides FlagService providesFlagService(@Named("defaultInterceptorV3")
+      BodyInterceptor<cm.aptoide.pt.dataprovider.ws.v3.BaseBody> bodyInterceptorV3,
+      @Named("default") OkHttpClient okHttpClient, TokenInvalidator tokenInvalidator,
+      @Named("default") SharedPreferences sharedPreferences) {
+    return new FlagService(bodyInterceptorV3, okHttpClient, tokenInvalidator, sharedPreferences);
+  }
+
+  @FragmentScope @Provides DownloadStateParser providesDownloadStateParser() {
+    return new DownloadStateParser();
+  }
+
+  @FragmentScope @Provides SocialRepository providesSocialRepository(
+      AptoideAccountManager accountManager,
+      @Named("pool-v7") BodyInterceptor<BaseBody> bodyInterceptorPoolV7,
+      @Named("default") OkHttpClient okHttpClient, TimelineAnalytics timelineAnalytics,
+      TokenInvalidator tokenInvalidator, @Named("default") SharedPreferences sharedPreferences) {
+    return new SocialRepository(accountManager, bodyInterceptorPoolV7,
+        WebService.getDefaultConverter(), okHttpClient, timelineAnalytics, tokenInvalidator,
+        sharedPreferences);
+  }
+
+  @FragmentScope @Provides AppViewManager providesAppViewManager(InstallManager installManager,
+      DownloadFactory downloadFactory, AppCenter appCenter, ReviewsManager reviewsManager,
+      AdsManager adsManager, StoreManager storeManager, FlagManager flagManager,
+      StoreUtilsProxy storeUtilsProxy, AptoideAccountManager aptoideAccountManager,
+      AppViewConfiguration appViewConfiguration, PreferencesManager preferencesManager,
+      DownloadStateParser downloadStateParser, AppViewAnalytics appViewAnalytics,
+      NotificationAnalytics notificationAnalytics, InstallAnalytics installAnalytics,
+      Resources resources, WindowManager windowManager, SocialRepository socialRepository,
+      @Named("marketName") String marketName) {
+    return new AppViewManager(installManager, downloadFactory, appCenter, reviewsManager,
+        adsManager, storeManager, flagManager, storeUtilsProxy, aptoideAccountManager,
+        appViewConfiguration, preferencesManager, downloadStateParser, appViewAnalytics,
+        notificationAnalytics, installAnalytics,
+        (Type.APPS_GROUP.getPerLineCount(resources, windowManager) * 6), socialRepository,
+        marketName);
+  }
+
+  @FragmentScope @Provides AppViewPresenter providesAppViewPresenter(
+      AccountNavigator accountNavigator, AppViewAnalytics analytics, StoreAnalytics storeAnalytics,
+      BillingAnalytics billingAnalytics, AppViewNavigator appViewNavigator,
+      AppViewManager appViewManager, AptoideAccountManager accountManager,
+      CrashReport crashReport) {
+    return new AppViewPresenter((AppViewView) fragment, accountNavigator, analytics, storeAnalytics,
+        billingAnalytics, appViewNavigator, appViewManager, accountManager,
+        AndroidSchedulers.mainThread(), crashReport, new PermissionManager(),
+        ((PermissionService) fragment.getContext()));
+  }
+
+  @FragmentScope @Provides AppViewConfiguration providesAppViewConfiguration() {
+    return new AppViewConfiguration(arguments.getLong(BundleKeys.APP_ID.name(), -1),
+        arguments.getString(BundleKeys.PACKAGE_NAME.name(), null),
+        arguments.getString(BundleKeys.STORE_NAME.name(), null),
+        arguments.getString(BundleKeys.STORE_THEME.name(), ""),
+        Parcels.unwrap(arguments.getParcelable(BundleKeys.MINIMAL_AD.name())),
+        ((NewAppViewFragment.OpenType) arguments.getSerializable(BundleKeys.SHOULD_INSTALL.name())),
+        arguments.getString(BundleKeys.MD5.name(), ""),
+        arguments.getString(BundleKeys.UNAME.name(), ""),
+        arguments.getDouble(BundleKeys.APPC.name(), -1),
+        arguments.getString(BundleKeys.EDITORS_CHOICE_POSITION.name(), ""),
+        arguments.getString(BundleKeys.ORIGIN_TAG.name(), ""));
+  }
+
+  @FragmentScope @Provides MoreBundlePresenter providesGetStoreWidgetsPresenter(
+      MoreBundleManager moreBundleManager, CrashReport crashReport, HomeNavigator homeNavigator,
+      AdMapper adMapper, BundleEvent bundleEvent, HomeAnalytics homeAnalytics) {
+    return new MoreBundlePresenter((MoreBundleView) fragment, moreBundleManager,
+        AndroidSchedulers.mainThread(), crashReport, homeNavigator, adMapper, bundleEvent,
+        homeAnalytics);
+  }
+
+  @FragmentScope @Provides MoreBundleManager providesGetStoreManager(
+      BundlesRepository bundlesRepository) {
+    return new MoreBundleManager(bundlesRepository);
+  }
+
+  @FragmentScope @Provides BundleEvent providesBundleEvent() {
+    return new BundleEvent(arguments.getString(BundleCons.TITLE),
+        arguments.getString(BundleCons.ACTION));
   }
 }

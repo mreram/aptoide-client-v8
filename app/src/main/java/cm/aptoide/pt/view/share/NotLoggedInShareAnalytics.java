@@ -3,8 +3,8 @@ package cm.aptoide.pt.view.share;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.FacebookSignUpException;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.AnalyticsManager;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +25,9 @@ public class NotLoggedInShareAnalytics {
   public static final String LOGIN_INCOMPLETE_PARAMETER = "Login incomplete";
   public static final String LOGIN_GOOGLE_PARAMETER = "Login Google";
   public static final String LOGIN_FACEBOOK_PARAMETER = "Login Facebook";
+  public static final String ALTERNATIVE_FLOW = "alternative_flow";
+  public static final String MESSAGE_IMPRESSION = "Message_Impression";
+  public static final String MESSAGE_INTERACT = "Message_Interact";
   private final AnalyticsManager analyticsManager;
   private final NavigationTracker navigationTracker;
   private final AccountAnalytics accountAnalytics;
@@ -37,14 +40,28 @@ public class NotLoggedInShareAnalytics {
     this.accountAnalytics = accountAnalytics;
   }
 
-  public void sendGoogleLoginButtonPressed() {
+  public void sendGoogleLoginResultEvent(String packageName, String success) {
     accountAnalytics.sendGoogleLoginButtonPressed();
     loginEventMap = createMap(LOGIN_GOOGLE_PARAMETER, NONE_PARAMETER);
+    sendInteractEvent(packageName, "Google", success);
   }
 
-  public void sendFacebookLoginButtonPressed() {
+  private void sendInteractEvent(String packageName, String action, String success) {
+    final Map<String, Object> data = new HashMap<>();
+    data.put("type", "not login recommend app");
+    data.put("fragment", getViewName(true));
+    data.put("package_name", packageName);
+    data.put("status", success);
+    data.put("action", action);
+
+    analyticsManager.logEvent(data, MESSAGE_INTERACT, AnalyticsManager.Action.CLICK,
+        navigationTracker.getViewName(true));
+  }
+
+  public void sendFacebookLoginButtonPressed(String packageName, String success) {
     accountAnalytics.sendFacebookLoginButtonPressed();
     loginEventMap = createMap(LOGIN_FACEBOOK_PARAMETER, NONE_PARAMETER);
+    sendInteractEvent(packageName, "Facebook", success);
   }
 
   public void sendGoogleSignUpFailEvent() {
@@ -85,16 +102,6 @@ public class NotLoggedInShareAnalytics {
         AnalyticsManager.Action.CLICK, getViewName(true));
   }
 
-  public void sendTapOnFakeToolbar() {
-    analyticsManager.logEvent(createMap("Tap on Install - Login - Share image", NONE_PARAMETER),
-        POP_UP_SHARE_TIMELINE, AnalyticsManager.Action.CLICK, getViewName(true));
-  }
-
-  public void sendTapOnFakeTimeline() {
-    analyticsManager.logEvent(createMap("Tap on Timeline image", NONE_PARAMETER),
-        POP_UP_SHARE_TIMELINE, AnalyticsManager.Action.CLICK, getViewName(true));
-  }
-
   public void sendShareSuccess() {
     loginEventMap.put(STATUS_PARAMETER_NAME, SHARE_SUCCESS_PARAMETER);
     analyticsManager.logEvent(loginEventMap, POP_UP_SHARE_TIMELINE, AnalyticsManager.Action.CLICK,
@@ -114,6 +121,7 @@ public class NotLoggedInShareAnalytics {
     map.put(SOURCE_PARAMETER_NAME, APP_VIEW_PARAMETER);
     map.put(ACTION_PARAMETER_NAME, action);
     map.put(STATUS_PARAMETER_NAME, status);
+    map.put(ALTERNATIVE_FLOW, true);
     return map;
   }
 
@@ -148,5 +156,15 @@ public class NotLoggedInShareAnalytics {
 
   private String getViewName(boolean isCurrent) {
     return navigationTracker.getViewName(isCurrent);
+  }
+
+  public void sendNotLoggedInRecommendAppImpressionEvent(String packageName) {
+    final Map<String, Object> data = new HashMap<>();
+    data.put("type", "not login recommend app");
+    data.put("fragment", getViewName(true));
+    data.put("package_name", packageName);
+
+    analyticsManager.logEvent(data, MESSAGE_IMPRESSION, AnalyticsManager.Action.IMPRESSION,
+        navigationTracker.getViewName(true));
   }
 }

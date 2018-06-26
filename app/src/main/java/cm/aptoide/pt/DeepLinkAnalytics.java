@@ -1,7 +1,7 @@
 package cm.aptoide.pt;
 
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.AnalyticsManager;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,12 +14,19 @@ public class DeepLinkAnalytics {
   public static final String APP_LAUNCH = "Application Launch";
   private static final String NEW_UPDATES_NOTIFICATION = "New Updates Available";
   private static final String DOWNLOADING_UPDATES = "Downloading Updates";
-  private static final String TIMELINE_NOTIFICATION = "Timeline Notification";
   private static final String NEW_REPO = "New Repository";
   private static final String WEBSITE = "Website";
   private static final String URI = "Uri";
   private static final String SOURCE = "Source";
   private static final String LAUNCHER = "Launcher";
+  private static final String SOURCE_GROUP_OPTION_APP_VIEW = "aptoide app view";
+  private static final String SOURCE_GROUP_OPTION_HOME = "aptoide homepage";
+  private static final String SOURCE_GROUP_OPTION_STORE = "aptoide store";
+  private static final String SOURCE_GROUP_OPTION_BUNDLES = "aptoide bundle";
+  private static final String SOURCE_GROUP_OPTION_THANK_YOU = "aptoide thank you page";
+  private static final String SOURCE_GROUP_ATTRIBUTE = "source_group";
+  private HashMap<String, Object> map = new HashMap<>();
+
   private AnalyticsManager analyticsManager;
   private NavigationTracker navigationTracker;
 
@@ -34,15 +41,48 @@ public class DeepLinkAnalytics {
   }
 
   public void website(String uri) {
-    HashMap<String, Object> map = new HashMap<>();
+    map = new HashMap<>();
     map.put(SOURCE, WEBSITE);
 
     if (uri != null) {
       map.put(URI, uri.substring(0, uri.indexOf(":")));
     }
-    analyticsManager.logEvent(map, FACEBOOK_APP_LAUNCH, AnalyticsManager.Action.AUTO,
-        getViewName(true));
-    analyticsManager.logEvent(map, APP_LAUNCH, AnalyticsManager.Action.AUTO, getViewName(true));
+  }
+
+  public void sendWebsite() {
+
+    if (map != null && !map.isEmpty()) {
+      analyticsManager.logEvent(map, FACEBOOK_APP_LAUNCH, AnalyticsManager.Action.AUTO,
+          getViewName(true));
+      analyticsManager.logEvent(map, APP_LAUNCH, AnalyticsManager.Action.AUTO, getViewName(true));
+    }
+    map = null;
+  }
+
+  private void websiteSourceGroup(String sourceGroupValue) {
+    if (map != null && !map.isEmpty()) {
+      map.put(SOURCE_GROUP_ATTRIBUTE, sourceGroupValue);
+    }
+  }
+
+  public void websiteFromHomeWebPage() {
+    websiteSourceGroup(SOURCE_GROUP_OPTION_HOME);
+  }
+
+  public void websiteFromAppViewWebPage() {
+    websiteSourceGroup(SOURCE_GROUP_OPTION_APP_VIEW);
+  }
+
+  public void websiteFromBundlesWebPage() {
+    websiteSourceGroup(SOURCE_GROUP_OPTION_BUNDLES);
+  }
+
+  public void websiteFromStoreWebPage() {
+    websiteSourceGroup(SOURCE_GROUP_OPTION_STORE);
+  }
+
+  public void websiteFromThankYouWebPage() {
+    websiteSourceGroup(SOURCE_GROUP_OPTION_THANK_YOU);
   }
 
   public void newUpdatesNotification() {
@@ -52,11 +92,6 @@ public class DeepLinkAnalytics {
 
   public void downloadingUpdates() {
     analyticsManager.logEvent(createMap(SOURCE, DOWNLOADING_UPDATES), APP_LAUNCH,
-        AnalyticsManager.Action.AUTO, getViewName(true));
-  }
-
-  public void timelineNotification() {
-    analyticsManager.logEvent(createMap(SOURCE, TIMELINE_NOTIFICATION), APP_LAUNCH,
         AnalyticsManager.Action.AUTO, getViewName(true));
   }
 

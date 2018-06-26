@@ -20,15 +20,16 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.addressbook.AddressBookAnalytics;
 import cm.aptoide.pt.addressbook.data.ContactsRepository;
 import cm.aptoide.pt.addressbook.utils.ContactUtils;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
+import cm.aptoide.analytics.AnalyticsManager;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.presenter.PhoneInputContract;
 import cm.aptoide.pt.presenter.PhoneInputPresenter;
 import cm.aptoide.pt.utils.GenericDialogs;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.fragment.UIComponentFragment;
 import com.jakewharton.rxbinding.view.RxView;
 import javax.inject.Inject;
@@ -38,7 +39,8 @@ import retrofit2.Converter;
 /**
  * Created by jdandrade on 14/02/2017.
  */
-public class PhoneInputFragment extends UIComponentFragment implements PhoneInputContract.View {
+public class PhoneInputFragment extends UIComponentFragment
+    implements PhoneInputContract.View, NotBottomNavigationView {
 
   public static final String TAG = "TAG";
   @Inject AnalyticsManager analyticsManager;

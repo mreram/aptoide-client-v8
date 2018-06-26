@@ -2,7 +2,7 @@ package cm.aptoide.pt.view;
 
 import android.support.v4.app.Fragment;
 import cm.aptoide.pt.addressbook.data.Contact;
-import cm.aptoide.pt.app.view.AppViewFragment;
+import cm.aptoide.pt.app.view.NewAppViewFragment;
 import cm.aptoide.pt.dataprovider.model.v7.Event;
 import cm.aptoide.pt.dataprovider.util.CommentType;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
@@ -35,10 +35,8 @@ import java.util.List;
 
   Fragment newStoreFragment(long userId, String storeTheme, StoreFragment.OpenType openType);
 
-  Fragment newAppViewFragment(String packageName, String storeName,
-      AppViewFragment.OpenType openType);
-
-  Fragment newAppViewFragment(String md5);
+  @Deprecated Fragment newAppViewFragment(String packageName, String storeName,
+      NewAppViewFragment.OpenType openType);
 
   Fragment newAppViewFragment(long appId, String packageName, AppViewFragment.OpenType openType,
       String tag);
@@ -50,7 +48,7 @@ import java.util.List;
 
   Fragment newAppViewFragment(SearchAdResult searchAdResult, String tag);
 
-  Fragment newAppViewFragment(String packageName, AppViewFragment.OpenType openType);
+  @Deprecated Fragment newAppViewFragment(String packageName, NewAppViewFragment.OpenType openType);
 
   Fragment newFragmentTopStores();
 
@@ -86,10 +84,7 @@ import java.util.List;
 
   Fragment newListStoresFragment();
 
-  Fragment newAppsTimelineFragment(String action, Long userId, Long storeId,
-      StoreContext storeContext);
-
-  Fragment newSubscribedStoresFragment(Event event, String storeTheme, String tag,
+  @Deprecated Fragment newSubscribedStoresFragment(Event event, String storeTheme, String tag,
       StoreContext storeName);
 
   Fragment newDownloadsFragment();
@@ -125,16 +120,10 @@ import java.util.List;
   Fragment newTimeLineLikesFragment(String cardUid, long numberOfLikes, String storeTheme,
       String title, StoreContext storeContext);
 
-  Fragment newCommentGridRecyclerFragment(CommentType commentType, String elementId,
-      StoreContext storeContext);
-
-  Fragment newCommentGridRecyclerFragmentUrl(CommentType commentType, String url,
+  @Deprecated Fragment newCommentGridRecyclerFragmentUrl(CommentType commentType, String url,
       String storeAnalyticsAction, StoreContext storeContext);
 
-  Fragment newCommentGridRecyclerFragmentWithCommentDialogOpen(CommentType commentType,
-      String elementId, StoreContext storeContext);
-
-  Fragment newAddressBookFragment();
+  @Deprecated Fragment newAddressBookFragment();
 
   Fragment newSyncSuccessFragment(List<Contact> contacts, String tag);
 

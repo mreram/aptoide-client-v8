@@ -141,8 +141,8 @@ public class DefaultInstaller implements Installer {
         .map(installed -> {
           if (installed != null) {
             return new InstallationState(installed.getPackageName(), installed.getVersionCode(),
-                installed.getStatus(), installed.getType(), installed.getName(),
-                installed.getIcon());
+                installed.getVersionName(), installed.getStatus(), installed.getType(),
+                installed.getName(), installed.getIcon());
           } else {
             return new InstallationState(packageName, versionCode, Installed.STATUS_UNINSTALLED,
                 Installed.TYPE_UNKNOWN);
@@ -264,7 +264,7 @@ public class DefaultInstaller implements Installer {
       //file://....apk for < nougat
       photoURI = Uri.fromFile(file);
     }
-    Logger.v(TAG, photoURI.toString());
+    Logger.getInstance().v(TAG, photoURI.toString());
 
     intent.setDataAndType(photoURI, "application/vnd.android.package-archive");
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK

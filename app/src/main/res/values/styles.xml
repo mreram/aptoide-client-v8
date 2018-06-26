@@ -28,22 +28,10 @@
   <style name="Widget.Aptoide.Card.Title.Large.Black">
     <item name="android:textColor">@android:color/black</item>
   </style>
-  <![CDATA[
 
-
-
-
-
-
-
-
-
-
-
-
-  >
-
-  ]]>
+  <style name="Ripple">
+    <item name="colorControlHighlight">@color/aptoide_orange</item>
+  </style>
 
   <style name="customRowStyleHomeLayout">
     <item name="android:clickable">true</item>
@@ -90,7 +78,7 @@
 
   <style name="RatingBarLargeSelectable">
     <!--<item name="android:progressDrawable">@drawable/rating_bar_big</item>-->
-    <item name="android:progressDrawable">@drawable/rating_bar_medium</item>
+    <item name="android:progressDrawable">@drawable/rating_bar_review</item>
     <item name="android:minHeight">26dp</item>
     <item name="android:maxHeight">26dp</item>
   </style>
@@ -197,7 +185,9 @@
 
   <style name="badgeReasonStyle">
     <item name="android:paddingRight">44dp</item>
+    <item name="android:paddingEnd">44dp</item>
     <item name="android:paddingLeft">4dp</item>
+    <item name="android:paddingStart">4dp</item>
     <item name="android:textAppearance">@android:style/TextAppearance.Small</item>
     <item name="android:textSize">12sp</item>
   </style>
@@ -231,63 +221,63 @@
   </style>
 
   <style name="ToolbarGreyTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/grey_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarTealTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/teal_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarBrownTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/brown_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarBluegreyTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/blue_grey_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarLightgreenTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/light_green_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarAmberTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/amber_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarLimeTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/lime_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarOrangeTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/orange_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarPinkTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/pink_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarIndigoTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/indigo_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarRedTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/red_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarGreenTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/green_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarDeeppurpleTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/deep_purple_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarBlackTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/grey_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
   <style name="ToolbarLightblueTransparent" parent="@style/Theme.AppCompat">
-    <item name="pstsIndicatorColor">@color/light_blue_700</item>
+    <item name="pstsIndicatorColor">@color/white</item>
   </style>
 
 
@@ -512,6 +502,12 @@
     <item name="android:textColor">@color/fragment_payment_dark_gray</item>
   </style>
 
+  <style name="Widget.Aptoide.Button.Borderless.Colored.Medium.S.GreyMedium" parent="@style/Widget.Aptoide.Button.Borderless.Colored">
+    <item name="android:textColor">@color/grey_medium</item>
+    <item name="android:textSize">14sp</item>
+    <item name="android:lineSpacingExtra">5dp</item>
+  </style>
+
   <style name="Widget.Aptoide.Button.Borderless" parent="@style/Widget.AppCompat.Button.Borderless">
     <item name="android:textColor">@color/fragment_payment_light_gray</item>
   </style>
@@ -531,22 +527,14 @@
   </style>
 
   <style name="OnBoarding.Title.TextView" parent="Aptoide.TextView.Medium.L">
-    <item name="android:layout_marginBottom">16dp</item>
-    <item name="android:layout_marginTop">10dp</item>
-    <item name="android:textColor">@color/white</item>
+    <item name="android:textColor">@color/grey_700</item>
     <item name="android:gravity">center</item>
   </style>
 
 
-  <style name="OnBoarding.SubTitle.TextView" parent="Aptoide.TextView.Regular.S">
+  <style name="OnBoarding.SubTitle.TextView" parent="Aptoide.TextView.Medium.M">
     <item name="android:gravity">center</item>
-    <item name="android:layout_marginLeft">10dp</item>
-    <item name="android:layout_marginRight">10dp</item>
-    <item name="android:layout_marginStart">10dp</item>
-    <item name="android:layout_marginEnd">10dp</item>
-    <item name="android:layout_marginBottom">10dp</item>
-    <item name="android:textColor">@color/white</item>
+    <item name="android:textColor">@color/grey_fog_dark</item>
   </style>
-
 
 </resources>

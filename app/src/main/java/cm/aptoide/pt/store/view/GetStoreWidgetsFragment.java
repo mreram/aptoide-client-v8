@@ -62,10 +62,5 @@ public class GetStoreWidgetsFragment extends GetStoreEndlessFragment<GetStoreWid
 
   @Override public void onResume() {
     super.onResume();
-    //if (getUserVisibleHint() && alreadyRegistered) {
-    //  navigationTracker.registerView(ScreenTagHistory.Builder.build(this.getClass()
-    //      .getSimpleName(), "home", storeContext));
-    //  pageViewsAnalytics.sendPageViewedEvent();
-    //}
   }
 }

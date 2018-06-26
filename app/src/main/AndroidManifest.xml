@@ -57,7 +57,8 @@
 
     <activity
         android:name=".view.entry.EntryActivity"
-        android:theme="@style/Theme.AppCompat.Translucent">
+        android:theme="@style/Theme.AppCompat.Translucent"
+        >
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
         <category android:name="android.intent.category.LAUNCHER"/>
@@ -71,7 +72,14 @@
         android:name=".view.OpenGLES20Activity"
         android:theme="@style/Theme.AppCompat.Translucent"></activity>
 
-    <activity android:name=".view.MainActivity"/>
+    <activity
+        android:name=".view.MainActivity"
+        android:windowSoftInputMode="adjustPan"></activity>
+
+    <activity
+        android:name=".view.FairyMainActivity"
+        android:windowSoftInputMode="adjustPan"
+        />
 
     <meta-data
         android:name="io.fabric.ApiKey"
@@ -120,20 +128,11 @@
         android:value="GlideModule"/>
 
     <activity
-        android:name=".timeline.post.PostActivity"
-        android:launchMode="singleInstance">
-      <intent-filter>
-        <action android:name="android.intent.action.SEND"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-        <data android:mimeType="text/plain"/>
-      </intent-filter>
-    </activity>
-
-    <activity
         android:name=".billing.view.BillingActivity"
         android:launchMode="singleInstance"
         android:screenOrientation="sensor"
-        android:theme="@style/AppBaseTheme.NoTitle.Transparent">
+        android:theme="@style/AppBaseTheme.NoTitle.Transparent"
+        >
       <intent-filter>
         <action android:name="android.intent.action.VIEW"/>
 
@@ -147,15 +146,21 @@
       </intent-filter>
     </activity>
 
-    <activity android:name=".account.view.LoginActivity"/>
+    <activity
+        android:name=".account.view.LoginActivity"
+        android:windowSoftInputMode="adjustPan"
+        />
 
     <activity
         android:name="com.facebook.FacebookActivity"
-        android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"/>
+        android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+        android:windowSoftInputMode="adjustPan"
+        />
 
     <activity
         android:name=".DeepLinkIntentReceiver"
-        android:exported="true">
+        android:exported="true"
+        >
       <intent-filter>
         <action android:name="android.intent.action.VIEW"/>
 
@@ -257,7 +262,6 @@
 
         <data
             android:host="*.aptoide.com"
-            android:pathPrefix="/store/"
             android:scheme="http"/>
       </intent-filter>
 
@@ -270,8 +274,33 @@
 
         <data
             android:host="*.aptoide.com"
-            android:pathPrefix="/store/"
+            android:pathPattern="/store/..*"
             android:scheme="https"/>
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+
+        <data
+            android:host="*.aptoide.com"
+            android:pathPattern="/thank-you*"
+            android:scheme="https"/>
+      </intent-filter>
+
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+
+        <data
+            android:host="*.aptoide.com"
+            android:path="/"
+            android:scheme="https"
+            tools:ignore="AppLinkUrlError"/>
       </intent-filter>
 
     </activity>
@@ -314,7 +343,9 @@
 
     <activity
         android:name="com.mopub.common.MoPubBrowser"
-        android:configChanges="keyboardHidden|orientation|screenSize"/>
+        android:configChanges="keyboardHidden|orientation|screenSize"
+        android:windowSoftInputMode="adjustPan"
+        />
 
     <receiver
         android:name=".widget.SearchWidgetProvider"

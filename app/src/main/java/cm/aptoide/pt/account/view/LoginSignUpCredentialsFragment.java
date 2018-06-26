@@ -6,7 +6,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.Snackbar;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
 import android.text.method.PasswordTransformationMethod;
+import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,18 +22,20 @@ import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.BuildConfig;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.AccountAnalytics;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.orientation.ScreenOrientationManager;
 import cm.aptoide.pt.presenter.LoginSignUpCredentialsPresenter;
 import cm.aptoide.pt.presenter.LoginSignUpCredentialsView;
 import cm.aptoide.pt.utils.GenericDialogs;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.rx.RxAlertDialog;
 import com.jakewharton.rxbinding.view.RxView;
 import javax.inject.Inject;
 import rx.Observable;
+import rx.subjects.PublishSubject;
 
 public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
-    implements LoginSignUpCredentialsView {
+    implements LoginSignUpCredentialsView, NotBottomNavigationView {
 
   private static final String DISMISS_TO_NAVIGATE_TO_MAIN_VIEW = "dismiss_to_navigate_to_main_view";
   private static final String CLEAN_BACK_STACK = "clean_back_stack";
@@ -62,6 +68,9 @@ public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
   private View rootView;
   private String marketName;
 
+  private PublishSubject<Void> privacyPolicySubject;
+  private PublishSubject<Void> termsAndConditionsSubject;
+
   public static LoginSignUpCredentialsFragment newInstance(boolean dismissToNavigateToMainView,
       boolean cleanBackStack) {
     final LoginSignUpCredentialsFragment fragment = new LoginSignUpCredentialsFragment();
@@ -78,11 +87,19 @@ public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
     super.onCreate(savedInstanceState);
     getFragmentComponent(savedInstanceState).inject(this);
     marketName = ((AptoideApplication) getActivity().getApplication()).getMarketName();
+    privacyPolicySubject = PublishSubject.create();
+    termsAndConditionsSubject = PublishSubject.create();
   }
 
   @Override public ScreenTagHistory getHistoryTracker() {
     return ScreenTagHistory.Builder.build(this.getClass()
         .getSimpleName());
+  }
+
+  @Override public void onDestroy() {
+    privacyPolicySubject = null;
+    termsAndConditionsSubject = null;
+    super.onDestroy();
   }
 
   @Override public void hideKeyboard() {
@@ -107,10 +124,12 @@ public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
 
   @Override public void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    outState.putString(USERNAME_KEY, aptoideEmailEditText.getText()
-        .toString());
-    outState.putString(PASSWORD_KEY, aptoidePasswordEditText.getText()
-        .toString());
+    if (outState != null && aptoideEmailEditText != null && aptoidePasswordEditText != null) {
+      outState.putString(USERNAME_KEY, aptoideEmailEditText.getText()
+          .toString());
+      outState.putString(PASSWORD_KEY, aptoidePasswordEditText.getText()
+          .toString());
+    }
   }
 
   @Override public Observable<Void> showAptoideLoginAreaClick() {
@@ -160,6 +179,14 @@ public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
         .map(click -> getCredentials());
   }
 
+  @Override public Observable<Void> termsAndConditionsClickEvent() {
+    return termsAndConditionsSubject;
+  }
+
+  @Override public Observable<Void> privacyPolicyClickEvent() {
+    return privacyPolicySubject;
+  }
+
   @Override public void showAptoideSignUpArea() {
     setAptoideSignUpLoginAreaVisible();
     loginArea.setVisibility(View.GONE);
@@ -206,13 +233,13 @@ public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
   @Override public void showPassword() {
     isPasswordVisible = true;
     aptoidePasswordEditText.setTransformationMethod(null);
-    hideShowAptoidePasswordButton.setBackgroundResource(R.drawable.icon_open_eye);
+    hideShowAptoidePasswordButton.setBackgroundResource(R.drawable.ic_open_eye);
   }
 
   @Override public void hidePassword() {
     isPasswordVisible = false;
     aptoidePasswordEditText.setTransformationMethod(new PasswordTransformationMethod());
-    hideShowAptoidePasswordButton.setBackgroundResource(R.drawable.icon_closed_eye);
+    hideShowAptoidePasswordButton.setBackgroundResource(R.drawable.ic_closed_eye);
   }
 
   @Override public void dismiss() {
@@ -313,8 +340,43 @@ public class LoginSignUpCredentialsFragment extends GooglePlayServicesFragment
     }
     loginArea = view.findViewById(R.id.login_button_area);
     signUpArea = view.findViewById(R.id.sign_up_button_area);
-    termsAndConditions = (TextView) view.findViewById(R.id.terms_and_conditions);
     separator = view.findViewById(R.id.separator);
+
+    ClickableSpan termsAndConditionsClickListener = new ClickableSpan() {
+      @Override public void onClick(View view) {
+        if (termsAndConditionsSubject != null) {
+          termsAndConditionsSubject.onNext(null);
+        }
+      }
+    };
+
+    ClickableSpan privacyPolicyClickListener = new ClickableSpan() {
+      @Override public void onClick(View view) {
+        if (privacyPolicySubject != null) {
+          privacyPolicySubject.onNext(null);
+        }
+      }
+    };
+
+    String baseString = getString(R.string.terms_and_conditions_privacy_sign_up_message);
+    String termsAndConditionsPlaceHolder = getString(R.string.settings_terms_conditions);
+    String privacyPolicyPlaceHolder = getString(R.string.settings_privacy_policy);
+    String privacyAndTerms =
+        String.format(baseString, termsAndConditionsPlaceHolder, privacyPolicyPlaceHolder);
+
+    SpannableString privacyAndTermsSpan = new SpannableString(privacyAndTerms);
+    privacyAndTermsSpan.setSpan(termsAndConditionsClickListener,
+        privacyAndTerms.indexOf(termsAndConditionsPlaceHolder),
+        privacyAndTerms.indexOf(termsAndConditionsPlaceHolder)
+            + termsAndConditionsPlaceHolder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    privacyAndTermsSpan.setSpan(privacyPolicyClickListener,
+        privacyAndTerms.indexOf(privacyPolicyPlaceHolder),
+        privacyAndTerms.indexOf(privacyPolicyPlaceHolder) + privacyPolicyPlaceHolder.length(),
+        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+    termsAndConditions = (TextView) view.findViewById(R.id.terms_and_conditions);
+    termsAndConditions.setText(privacyAndTermsSpan);
+    termsAndConditions.setMovementMethod(LinkMovementMethod.getInstance());
 
     facebookEmailRequiredDialog = new RxAlertDialog.Builder(getContext()).setMessage(
         R.string.facebook_email_permission_regected_message)

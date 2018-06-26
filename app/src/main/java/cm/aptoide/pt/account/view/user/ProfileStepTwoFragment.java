@@ -13,18 +13,20 @@ import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.view.AccountNavigator;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.fragment.BaseToolbarFragment;
 import com.jakewharton.rxbinding.view.RxView;
 import javax.inject.Inject;
 import rx.Completable;
 import rx.Observable;
 
-public class ProfileStepTwoFragment extends BaseToolbarFragment implements ProfileStepTwoView {
+public class ProfileStepTwoFragment extends BaseToolbarFragment
+    implements ProfileStepTwoView, NotBottomNavigationView {
 
   @LayoutRes private static final int LAYOUT = R.layout.fragment_profile_step_two;
   @Inject AccountAnalytics accountAnalytics;

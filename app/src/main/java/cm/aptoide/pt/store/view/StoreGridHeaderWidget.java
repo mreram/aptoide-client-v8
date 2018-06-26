@@ -13,6 +13,7 @@ import cm.aptoide.pt.dataprovider.model.v7.GetStoreWidgets;
 import cm.aptoide.pt.dataprovider.util.CommentType;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
+import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.view.Translator;
 import cm.aptoide.pt.view.recycler.widget.Widget;
 import com.jakewharton.rxbinding.view.RxView;
@@ -41,7 +42,11 @@ public class StoreGridHeaderWidget extends Widget<StoreGridHeaderDisplayable> {
     title.setText(Translator.translate(wsWidget.getTitle(), getContext().getApplicationContext(),
         marketName));
 
-    more.setVisibility(moreIsVisible && displayable.isMoreVisible() ? View.VISIBLE : View.GONE);
+    StoreGridHeaderDisplayable.Model model = displayable.getModel();
+    more.setTextColor(getContext().getResources()
+        .getColor(StoreTheme.get(model.getStoreTheme())
+            .getColorLetters()));
+    more.setVisibility(moreIsVisible && model.isMoreVisible() ? View.VISIBLE : View.GONE);
 
     if (moreIsVisible) {
       compositeSubscription.add(RxView.clicks(more)
@@ -64,8 +69,8 @@ public class StoreGridHeaderWidget extends Widget<StoreGridHeaderDisplayable> {
                   .newCommentGridRecyclerFragmentUrl(CommentType.STORE, url, "View Comments",
                       storeContext);
             } else {
-              fragment = AptoideApplication.getFragmentProvider()
-                  .newStoreTabGridRecyclerFragment(event, title, storeTheme, tag, storeContext);
+              displayable.getStoreTabNavigator()
+                  .navigateToStoreTabGridRecyclerView(event, title, storeTheme, tag, storeContext);
             }
 
             getFragmentNavigator().navigateTo(fragment, true);

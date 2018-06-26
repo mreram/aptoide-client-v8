@@ -41,11 +41,9 @@ import cm.aptoide.pt.app.AppRepository;
 import cm.aptoide.pt.app.AppViewAnalytics;
 import cm.aptoide.pt.app.AppViewSimilarAppAnalytics;
 import cm.aptoide.pt.app.view.displayable.AppViewDescriptionDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewDeveloperDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewFlagThisDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewInstallDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewRateAndCommentsDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewScreenshotsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppsDisplayable;
 import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.billing.exception.BillingException;
@@ -93,7 +91,6 @@ import cm.aptoide.pt.social.data.ReadPostsPersistence;
 import cm.aptoide.pt.store.StoreCredentialsProvider;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
-import cm.aptoide.pt.timeline.SocialRepository;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.util.ReferrerUtils;
 import cm.aptoide.pt.utils.AptoideUtils;
@@ -488,7 +485,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter> implements
     }
 
     if (getAppId() >= 0) {
-      Logger.d(TAG, "loading app info using app ID");
+      Logger.getInstance().d(TAG, "loading app info using app ID");
       subscription =
           appRepository.getApp(getAppId(), refresh, isSponsored(), getStoreName(), getPackageName(),
               refresh)
@@ -531,7 +528,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter> implements
                 .log(key_uname, getUname());
           });
     } else {
-      Logger.d(TAG, "loading app info using app package name");
+      Logger.getInstance().d(TAG, "loading app info using app package name");
       subscription =
           appRepository.getApp(getPackageName(), refresh, isSponsored(), getStoreName(), refresh)
               .map(getApp -> getApp)
@@ -949,7 +946,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter> implements
   @Override public void scroll(Position position) {
     RecyclerView rView = getRecyclerView();
     if (rView == null || getAdapter().getItemCount() == 0) {
-      Logger.e(TAG, "Recycler view is null or there are no elements in the adapter");
+      Logger.getInstance().e(TAG, "Recycler view is null or there are no elements in the adapter");
       return;
     }
 

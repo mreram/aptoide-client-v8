@@ -1,7 +1,7 @@
 package cm.aptoide.pt.store;
 
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.AnalyticsManager;
 import cm.aptoide.pt.utils.AptoideUtils;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,6 @@ import java.util.Map;
 
 public class StoreAnalytics {
 
-  public static final String STORES_TAB_OPEN = "Stores_Tab_Open";
   public static final String STORES_TAB_INTERACT = "Stores_Tab_Interact";
   public static final String STORES_OPEN = "Store_Open";
   public static final String STORES_INTERACT = "Store_Interact";
@@ -30,11 +29,6 @@ public class StoreAnalytics {
     this.navigationTracker = navigationTracker;
   }
 
-  public void sendStoreTabOpenedEvent() {
-    analyticsManager.logEvent(null, STORES_TAB_OPEN, AnalyticsManager.Action.CLICK,
-        getViewName(true));
-  }
-
   /// "add store" event implemented (according to sunil the information about how many apps/subscribers only needs to be sent when comming from a "follow a recommended store" event
   public void sendStoreTabInteractEvent(String action, boolean isCurrent) {
     analyticsManager.logEvent(createStoreInteractMap(action), STORES_TAB_INTERACT,
@@ -46,6 +40,20 @@ public class StoreAnalytics {
     analyticsManager.logEvent(
         createStoreTabInteractDataMap(action, storeAppsNumber, storeFollowers), STORES_TAB_INTERACT,
         AnalyticsManager.Action.CLICK, getViewName(true));
+  }
+
+  public void sendFollowersStoresInteractEvent() {
+    Map<String, Object> map = new HashMap<>();
+    map.put(ACTION, "Open Followers");
+    analyticsManager.logEvent(map, STORES_TAB_INTERACT, AnalyticsManager.Action.CLICK,
+        getViewName(true));
+  }
+
+  public void sendFollowingStoresInteractEvent() {
+    Map<String, Object> map = new HashMap<>();
+    map.put(ACTION, "Open Following");
+    analyticsManager.logEvent(map, STORES_TAB_INTERACT, AnalyticsManager.Action.CLICK,
+        getViewName(true));
   }
 
   public void sendStoreOpenEvent(String source, String storeName, boolean isCurrent) {

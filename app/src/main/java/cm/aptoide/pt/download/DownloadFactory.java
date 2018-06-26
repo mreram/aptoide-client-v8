@@ -15,7 +15,6 @@ import cm.aptoide.pt.dataprovider.model.v7.Obb;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.File;
 import cm.aptoide.pt.install.AutoUpdate;
-import cm.aptoide.pt.social.data.AppUpdate;
 import cm.aptoide.pt.updates.view.UpdateDisplayable;
 import io.realm.RealmList;
 
@@ -214,35 +213,6 @@ public class DownloadFactory {
     return download;
   }
 
-  public Download create(AppUpdate app, int downloadAction) {
-    final File file = app.getFile();
-    validateApp(app.getFile()
-            .getMd5sum(), app.getObb(), app.getPackageName(), app.getAppUpdateName(),
-        file != null ? file.getPath() : null, file != null ? file.getPathAlt() : null);
-    String path = app.getFile()
-        .getPath();
-    String altPath = app.getFile()
-        .getPathAlt();
-    ApkPaths downloadPaths = getDownloadPaths(downloadAction, path, altPath);
-    Download download = new Download();
-    download.setMd5(app.getFile()
-        .getMd5sum());
-    download.setIcon(app.getAppUpdateIcon());
-    download.setAction(downloadAction);
-    download.setAppName(app.getAppUpdateName());
-    download.setPackageName(app.getPackageName());
-    download.setVersionCode(app.getFile()
-        .getVercode());
-    download.setVersionName(app.getFile()
-        .getVername());
-    download.setFilesToDownload(createFileList(app.getFile()
-        .getMd5sum(), app.getPackageName(), downloadPaths.path, app.getFile()
-        .getMd5sum(), app.getObb(), downloadPaths.altPath, app.getFile()
-        .getVercode(), app.getFile()
-        .getVername()));
-    return download;
-  }
-
   public Download create(Update update) {
     validateApp(update.getMd5(), null, update.getPackageName(), update.getLabel(),
         update.getApkPath(), update.getAlternativeApkPath());
@@ -271,8 +241,31 @@ public class DownloadFactory {
     download.setPackageName(autoUpdateInfo.packageName);
     download.setAction(Download.ACTION_UPDATE);
     download.setFilesToDownload(
-        createFileList(autoUpdateInfo.md5, null, autoUpdateInfo.path, autoUpdateInfo.md5, null,
-            null, autoUpdateInfo.vercode, null));
+        createFileList(autoUpdateInfo.md5, null, autoUpdateInfo.path + UPDATE_ACTION,
+            autoUpdateInfo.md5, null, null, autoUpdateInfo.vercode, null));
+    return download;
+  }
+
+  public Download create(int downloadAction, String appName, String packageName, String md5,
+      String icon, String versionName, int versionCode, String appPath, String appPathAlt,
+      Obb obb) {
+    validateApp(md5, obb, packageName, appName, appPath, appPathAlt);
+
+    ApkPaths downloadPaths = getDownloadPaths(downloadAction, appPath, appPathAlt);
+
+    Download download = new Download();
+    download.setMd5(md5);
+    download.setIcon(icon);
+    download.setAppName(appName);
+    download.setAction(downloadAction);
+    download.setPackageName(packageName);
+    download.setVersionCode(versionCode);
+    download.setVersionName(versionName);
+
+    download.setFilesToDownload(
+        createFileList(md5, packageName, downloadPaths.path, md5, obb, downloadPaths.altPath,
+            versionCode, versionName));
+
     return download;
   }
 

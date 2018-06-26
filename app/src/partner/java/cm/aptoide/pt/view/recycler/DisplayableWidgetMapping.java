@@ -11,26 +11,21 @@ import cm.aptoide.pt.app.view.GridAppWidget;
 import cm.aptoide.pt.app.view.OfficialAppDisplayable;
 import cm.aptoide.pt.app.view.OfficialAppWidget;
 import cm.aptoide.pt.app.view.OtherVersionDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewAdDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewDescriptionDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewDeveloperDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewFlagThisDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewInstallDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewOtherVersionsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewRateAndCommentsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewRateResultsDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewScreenshotsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppsDisplayable;
 import cm.aptoide.pt.app.view.widget.AppViewAdWidget;
 import cm.aptoide.pt.app.view.widget.AppViewDescriptionWidget;
-import cm.aptoide.pt.app.view.widget.AppViewDeveloperWidget;
 import cm.aptoide.pt.app.view.widget.AppViewFlagThisWidget;
 import cm.aptoide.pt.app.view.widget.AppViewInstallWidget;
 import cm.aptoide.pt.app.view.widget.AppViewOtherVersionsWidget;
 import cm.aptoide.pt.app.view.widget.AppViewRateAndReviewsWidget;
 import cm.aptoide.pt.app.view.widget.AppViewRateResultsWidget;
-import cm.aptoide.pt.app.view.widget.AppViewScreenshotsWidget;
 import cm.aptoide.pt.app.view.widget.AppViewSuggestedAppWidget;
 import cm.aptoide.pt.app.view.widget.AppViewSuggestedAppsWidget;
 import cm.aptoide.pt.app.view.widget.OtherVersionWidget;
@@ -236,7 +231,7 @@ public class DisplayableWidgetMapping {
         AppViewSuggestedAppDisplayable.class));
 
     displayableWidgetMappings.add(
-        new DisplayableWidgetMapping(AppViewAdWidget.class, AppViewAdDisplayable.class));
+        new DisplayableWidgetMapping(AppViewAdWidget.class, AppViewSuggestedAdDisplayable.class));
 
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping(OtherVersionWidget.class, OtherVersionDisplayable.class));
@@ -318,7 +313,7 @@ public class DisplayableWidgetMapping {
           .log(e);
       String errMsg =
           String.format("Error instantiating displayable '%s'", displayableClass.getName());
-      Logger.e(TAG, errMsg, e);
+      Logger.getInstance().e(TAG, errMsg, e);
       throw new RuntimeException(errMsg);
     }
   }
@@ -343,7 +338,7 @@ public class DisplayableWidgetMapping {
       CrashReport.getInstance()
           .log(e);
       String errMsg = String.format("Error instantiating widget '%s'", widgetClass.getName());
-      Logger.e(TAG, errMsg, e);
+      Logger.getInstance().e(TAG, errMsg, e);
       throw new RuntimeException(errMsg);
     }
   }

@@ -14,18 +14,20 @@ import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.view.AccountNavigator;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.orientation.ScreenOrientationManager;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.fragment.BaseToolbarFragment;
 import com.jakewharton.rxbinding.view.RxView;
 import javax.inject.Inject;
 import rx.Completable;
 import rx.Observable;
 
-public class ProfileStepOneFragment extends BaseToolbarFragment implements ProfileStepOneView {
+public class ProfileStepOneFragment extends BaseToolbarFragment
+    implements ProfileStepOneView, NotBottomNavigationView {
 
   public static final String IS_EXTERNAL_LOGIN = "facebook_google";
   @LayoutRes private static final int LAYOUT = R.layout.fragment_profile_step_one;

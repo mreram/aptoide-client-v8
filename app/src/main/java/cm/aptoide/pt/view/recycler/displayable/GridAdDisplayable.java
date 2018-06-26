@@ -6,7 +6,7 @@
 package cm.aptoide.pt.view.recycler.displayable;
 
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
 import cm.aptoide.pt.database.realm.MinimalAd;
 
 /**
@@ -31,7 +31,7 @@ public class GridAdDisplayable extends DisplayablePojo<MinimalAd> {
   }
 
   @Override public int getViewLayout() {
-    return R.layout.displayable_grid_sponsored;
+    return R.layout.displayable_grid_ad;
   }
 
   public NavigationTracker getNavigationTracker() {

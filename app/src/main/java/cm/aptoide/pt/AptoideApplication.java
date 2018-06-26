@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.XmlResourceParser;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,16 +22,15 @@ import android.support.annotation.Nullable;
 import android.support.multidex.MultiDex;
 import cm.aptoide.accountmanager.AdultContent;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.AccountSettingsBodyInterceptorV7;
 import cm.aptoide.pt.account.AdultContentAnalytics;
 import cm.aptoide.pt.account.LoginPreferences;
-import cm.aptoide.pt.account.view.store.StoreManager;
 import cm.aptoide.pt.ads.AdsRepository;
 import cm.aptoide.pt.ads.MinimalAdMapper;
 import cm.aptoide.pt.analytics.FirstLaunchAnalytics;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
 import cm.aptoide.pt.billing.Billing;
 import cm.aptoide.pt.billing.BillingAnalytics;
 import cm.aptoide.pt.billing.BillingIdManager;
@@ -58,7 +58,6 @@ import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseRequestWithStore;
 import cm.aptoide.pt.dataprovider.ws.v7.PostReadRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetStoreMetaRequest;
-import cm.aptoide.pt.dataprovider.ws.v7.store.RequestBodyFactory;
 import cm.aptoide.pt.deprecated.SQLiteDatabaseHelper;
 import cm.aptoide.pt.downloadmanager.AptoideDownloadManager;
 import cm.aptoide.pt.file.CacheHelper;
@@ -71,7 +70,6 @@ import cm.aptoide.pt.install.PackageRepository;
 import cm.aptoide.pt.install.installer.RootInstallationRetryHandler;
 import cm.aptoide.pt.leak.LeakTool;
 import cm.aptoide.pt.link.AptoideInstallParser;
-import cm.aptoide.pt.link.LinksHandlerFactory;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.navigator.Result;
 import cm.aptoide.pt.networking.AuthenticationPersistence;
@@ -94,16 +92,14 @@ import cm.aptoide.pt.repository.RepositoryFactory;
 import cm.aptoide.pt.root.RootAvailabilityManager;
 import cm.aptoide.pt.search.suggestions.SearchSuggestionManager;
 import cm.aptoide.pt.search.suggestions.TrendingManager;
-import cm.aptoide.pt.social.TimelineRepositoryFactory;
 import cm.aptoide.pt.social.data.ReadPostsPersistence;
-import cm.aptoide.pt.social.data.TimelineRepository;
-import cm.aptoide.pt.social.data.TimelineResponseCardMapper;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreUtilsProxy;
 import cm.aptoide.pt.sync.SyncScheduler;
 import cm.aptoide.pt.sync.alarm.SyncStorage;
 import cm.aptoide.pt.sync.rx.RxSyncScheduler;
 import cm.aptoide.pt.timeline.TimelineAnalytics;
+import cm.aptoide.pt.util.PreferencesXmlParser;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.FileUtils;
 import cm.aptoide.pt.utils.SecurityUtils;
@@ -114,18 +110,15 @@ import cm.aptoide.pt.view.BaseActivity;
 import cm.aptoide.pt.view.BaseFragment;
 import cm.aptoide.pt.view.FragmentModule;
 import cm.aptoide.pt.view.FragmentProvider;
-import cm.aptoide.pt.view.app.AppCenter;
-import cm.aptoide.pt.view.app.AppCenterRepository;
-import cm.aptoide.pt.view.app.AppService;
 import cm.aptoide.pt.view.entry.EntryActivity;
 import cm.aptoide.pt.view.entry.EntryPointChooser;
 import cm.aptoide.pt.view.recycler.DisplayableWidgetMapping;
 import cm.aptoide.pt.view.share.NotLoggedInShareAnalytics;
 import com.crashlytics.android.Crashlytics;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flurry.android.FlurryAgent;
 import com.jakewharton.rxrelay.BehaviorRelay;
 import com.jakewharton.rxrelay.PublishRelay;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -137,8 +130,8 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import org.xmlpull.v1.XmlPullParserException;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
@@ -164,17 +157,11 @@ public abstract class AptoideApplication extends Application {
   @Inject AdultContent adultContent;
   @Inject IdsRepository idsRepository;
   @Inject @Named("default") OkHttpClient defaultClient;
-  @Inject @Named("web-socket") OkHttpClient webSocketClient;
-  @Inject @Named("user-agent") Interceptor userAgentInterceptor;
-  @Inject @Named("default") ObjectMapper nonNullObjectMapper;
-  @Inject RequestBodyFactory requestBodyFactory;
   @Inject RootAvailabilityManager rootAvailabilityManager;
-  @Inject StoreManager storeManager;
   @Inject AuthenticationPersistence authenticationPersistence;
   @Inject AccountAnalytics accountAnalytics;
   @Inject Crashlytics crashlytics;
   @Inject @Named("default") SharedPreferences defaultSharedPreferences;
-  @Inject @Named("secureShared") SharedPreferences secureSharedPreferences;
   @Inject SyncScheduler alarmSyncScheduler;
   @Inject @Named("pool-v7") BodyInterceptor<BaseBody> bodyInterceptorPoolV7;
   @Inject @Named("web-v7") BodyInterceptor<BaseBody> bodyInterceptorWebV7;
@@ -189,7 +176,6 @@ public abstract class AptoideApplication extends Application {
   @Inject AdsRepository adsRepository;
   @Inject SyncStorage syncStorage;
   @Inject NavigationTracker navigationTracker;
-  @Inject PageViewsAnalytics pageViewsAnalytics;
   @Inject @Named("account-settings-pool-v7") BodyInterceptor<BaseBody>
       accountSettingsBodyInterceptorPoolV7;
   @Inject TrendingManager trendingManager;
@@ -199,6 +185,7 @@ public abstract class AptoideApplication extends Application {
   @Inject AnalyticsManager analyticsManager;
   @Inject InstallAnalytics installAnalytics;
   @Inject FirstLaunchAnalytics firstLaunchAnalytics;
+  @Inject InvalidRefreshTokenLogoutManager invalidRefreshTokenLogoutManager;
   private LeakTool leakTool;
   private String aptoideMd5sum;
   private BillingAnalytics billingAnalytics;
@@ -209,7 +196,6 @@ public abstract class AptoideApplication extends Application {
   private EntryPointChooser entryPointChooser;
   private FileManager fileManager;
   private NotificationProvider notificationProvider;
-  private TimelineRepositoryFactory timelineRepositoryFactory;
   private BehaviorRelay<Map<Integer, Result>> fragmentResultRelay;
   private Map<Integer, Result> fragmentResulMap;
   private BillingPool billingPool;
@@ -219,7 +205,6 @@ public abstract class AptoideApplication extends Application {
   private PurchaseFactory purchaseFactory;
   private InstallManager installManager;
   private ApplicationComponent applicationComponent;
-  private AppCenter appCenter;
   private ReadPostsPersistence readPostsPersistence;
   private PublishRelay<NotificationInfo> notificationsPublishRelay;
   private NotificationsCleaner notificationsCleaner;
@@ -348,6 +333,7 @@ public abstract class AptoideApplication extends Application {
     startNotificationCleaner();
     getRootInstallationRetryHandler().start();
     AptoideApplicationAnalytics aptoideApplicationAnalytics = new AptoideApplicationAnalytics();
+    aptoideApplicationAnalytics.setPackageDimension(getPackageName());
     accountManager.accountStatus()
         .map(account -> account.isLoggedIn())
         .distinctUntilChanged()
@@ -358,8 +344,10 @@ public abstract class AptoideApplication extends Application {
         .log(throwable));
 
     long totalExecutionTime = System.currentTimeMillis() - initialTimestamp;
-    Logger.v(TAG, String.format("onCreate took %d millis.", totalExecutionTime));
+    Logger.getInstance()
+        .v(TAG, String.format("onCreate took %d millis.", totalExecutionTime));
     analyticsManager.setup();
+    invalidRefreshTokenLogoutManager.start();
   }
 
   public ApplicationComponent getApplicationComponent() {
@@ -627,8 +615,8 @@ public abstract class AptoideApplication extends Application {
     getFileManager().purgeCache()
         .first()
         .toSingle()
-        .subscribe(cleanedSize -> Logger.d(TAG,
-            "cleaned size: " + AptoideUtils.StringU.formatBytes(cleanedSize, false)),
+        .subscribe(cleanedSize -> Logger.getInstance()
+                .d(TAG, "cleaned size: " + AptoideUtils.StringU.formatBytes(cleanedSize, false)),
             err -> CrashReport.getInstance()
                 .log(err));
   }
@@ -660,15 +648,18 @@ public abstract class AptoideApplication extends Application {
   private Completable checkAppSecurity() {
     return Completable.fromAction(() -> {
       if (SecurityUtils.checkAppSignature(this) != SecurityUtils.VALID_APP_SIGNATURE) {
-        Logger.w(TAG, "app signature is not valid!");
+        Logger.getInstance()
+            .w(TAG, "app signature is not valid!");
       }
 
       if (SecurityUtils.checkEmulator()) {
-        Logger.w(TAG, "application is running on an emulator");
+        Logger.getInstance()
+            .w(TAG, "application is running on an emulator");
       }
 
       if (SecurityUtils.checkDebuggable(this)) {
-        Logger.w(TAG, "application has debug flag active");
+        Logger.getInstance()
+            .w(TAG, "application has debug flag active");
       }
     });
   }
@@ -691,7 +682,7 @@ public abstract class AptoideApplication extends Application {
               SecurePreferencesImplementation.getInstance(getApplicationContext(),
                   getDefaultSharedPreferences()))) {
 
-            PreferenceManager.setDefaultValues(this, R.xml.settings, false);
+            setSharedPreferencesValues();
 
             return setupFirstRun().andThen(getRootAvailabilityManager().updateRootAvailability())
                 .andThen(Completable.merge(accountManager.updateAccount(), createShortcut()));
@@ -699,6 +690,22 @@ public abstract class AptoideApplication extends Application {
 
           return Completable.complete();
         });
+  }
+
+  private void setSharedPreferencesValues() {
+    PreferencesXmlParser preferencesXmlParser = new PreferencesXmlParser();
+
+    XmlResourceParser parser = getResources().getXml(R.xml.settings);
+    try {
+      List<String[]> parsedPrefsList = preferencesXmlParser.parse(parser);
+      for (String[] keyValue : parsedPrefsList) {
+        getDefaultSharedPreferences().edit()
+            .putBoolean(keyValue[0], Boolean.valueOf(keyValue[1]))
+            .apply();
+      }
+    } catch (IOException | XmlPullParserException e) {
+      e.printStackTrace();
+    }
   }
 
   // todo re-factor all this code to proper Rx
@@ -809,7 +816,8 @@ public abstract class AptoideApplication extends Application {
       // get the installed apps
       List<PackageInfo> installedApps =
           AptoideUtils.SystemU.getAllInstalledApps(getPackageManager());
-      Logger.v(TAG, "Found " + installedApps.size() + " user installed apps.");
+      Logger.getInstance()
+          .v(TAG, "Found " + installedApps.size() + " user installed apps.");
 
       // Installed apps are inserted in database based on their firstInstallTime. Older comes first.
       Collections.sort(installedApps,
@@ -880,24 +888,6 @@ public abstract class AptoideApplication extends Application {
     return syncStorage;
   }
 
-  public TimelineRepository getTimelineRepository(String action, Context context) {
-    if (timelineRepositoryFactory == null) {
-      timelineRepositoryFactory =
-          new TimelineRepositoryFactory(new HashMap<>(), getAccountSettingsBodyInterceptorPoolV7(),
-              getDefaultClient(), getDefaultSharedPreferences(), getTokenInvalidator(),
-              new LinksHandlerFactory(this), getPackageRepository(),
-              WebService.getDefaultConverter(),
-              new TimelineResponseCardMapper(accountManager, getInstallManager(), getMarketName()),
-              RepositoryFactory.getUpdateRepository(context,
-                  ((AptoideApplication) context.getApplicationContext()).getDefaultSharedPreferences()));
-    }
-    return timelineRepositoryFactory.create(action);
-  }
-
-  public PageViewsAnalytics getPageViewsAnalytics() {
-    return pageViewsAnalytics;
-  }
-
   public BehaviorRelay<Map<Integer, Result>> getFragmentResultRelay() {
     if (fragmentResultRelay == null) {
       fragmentResultRelay = BehaviorRelay.create();
@@ -932,17 +922,6 @@ public abstract class AptoideApplication extends Application {
 
   public AccountAnalytics getAccountAnalytics() {
     return accountAnalytics;
-  }
-
-  @NonNull public AppCenter getAppCenter() {
-    if (appCenter == null) {
-      appCenter = new AppCenter(new AppCenterRepository(new AppService(
-          new StoreCredentialsProviderImpl(
-              AccessorFactory.getAccessorFor(getDatabase(), Store.class)),
-          getBodyInterceptorPoolV7(), getDefaultClient(), WebService.getDefaultConverter(),
-          getTokenInvalidator(), getDefaultSharedPreferences()), new HashMap<>()));
-    }
-    return appCenter;
   }
 
   public PurchaseFactory getPurchaseFactory() {
@@ -986,14 +965,6 @@ public abstract class AptoideApplication extends Application {
     return notificationAnalytics;
   }
 
-  public ObjectMapper getNonNullObjectMapper() {
-    return nonNullObjectMapper;
-  }
-
-  public OkHttpClient getDefaultWebSocketClient() {
-    return webSocketClient;
-  }
-
   public IdsRepository getIdsRepository() {
     return idsRepository;
   }
@@ -1004,8 +975,7 @@ public abstract class AptoideApplication extends Application {
 
   public TimelineAnalytics getTimelineAnalytics() {
     if (timelineAnalytics == null) {
-      timelineAnalytics = new TimelineAnalytics(getNotificationAnalytics(), getNavigationTracker(),
-          getReadPostsPersistence(), analyticsManager);
+      timelineAnalytics = new TimelineAnalytics(getNavigationTracker(), analyticsManager);
     }
     return timelineAnalytics;
   }

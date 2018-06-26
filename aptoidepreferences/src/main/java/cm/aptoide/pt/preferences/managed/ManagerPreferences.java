@@ -28,7 +28,7 @@ public class ManagerPreferences {
    * @return true when updates should hide alpha and beta versions.
    */
   public static boolean getUpdatesFilterAlphaBetaKey(SharedPreferences sharedPreferences) {
-    return sharedPreferences.getBoolean(ManagedKeys.UPDATES_FILTER_ALPHA_BETA_KEY, false);
+    return sharedPreferences.getBoolean(ManagedKeys.UPDATES_FILTER_ALPHA_BETA_KEY, true);
   }
 
   /**
@@ -51,12 +51,9 @@ public class ManagerPreferences {
         .apply();
   }
 
-  public static boolean getGeneralDownloadsWifi(SharedPreferences sharedPreferences) {
-    return sharedPreferences.getBoolean(ManagedKeys.GENERAL_DOWNLOADS_WIFI, true);
-  }
-
-  public static boolean getGeneralDownloadsMobile(SharedPreferences sharedPreferences) {
-    return sharedPreferences.getBoolean(ManagedKeys.GENERAL_DOWNLOADS_MOBILE, true);
+  public static boolean getDownloadsWifiOnly(SharedPreferences sharedPreferences) {
+    //returning the opposite because of the copy text on the preference was reverted from a version to another
+    return !sharedPreferences.getBoolean(ManagedKeys.GENERAL_DOWNLOADS_WIFI_ONLY, true);
   }
 
   public static boolean getAnimationsEnabledStatus(SharedPreferences defaultSharedPreferences) {
@@ -195,18 +192,6 @@ public class ManagerPreferences {
   public static void setFacebookAsSynced(SharedPreferences sharedPreferences) {
     sharedPreferences.edit()
         .putBoolean(ManagedKeys.FACEBOOK_SYNC, true)
-        .apply();
-  }
-
-  public static void setAddressBookSyncValues(Boolean value, SharedPreferences sharedPreferences) {
-    sharedPreferences.edit()
-        .putBoolean(ManagedKeys.ADDRESS_BOOK_SYNC, value)
-        .apply();
-    sharedPreferences.edit()
-        .putBoolean(ManagedKeys.TWITTER_SYNC, value)
-        .apply();
-    sharedPreferences.edit()
-        .putBoolean(ManagedKeys.FACEBOOK_SYNC, value)
         .apply();
   }
 

@@ -12,8 +12,9 @@ import android.view.View;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.app.view.AppViewFragment;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
+import cm.aptoide.pt.app.AppNavigator;
+import cm.aptoide.pt.app.view.NewAppViewFragment;
 import cm.aptoide.pt.comments.ListFullReviewsSuccessRequestListener;
 import cm.aptoide.pt.comments.view.CommentDisplayable;
 import cm.aptoide.pt.comments.view.CommentsAdapter;
@@ -51,6 +52,7 @@ import cm.aptoide.pt.view.recycler.displayable.ProgressBarDisplayable;
 import com.jakewharton.rxbinding.view.RxView;
 import com.trello.rxlifecycle.android.FragmentEvent;
 import java.util.List;
+import javax.inject.Inject;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.android.schedulers.AndroidSchedulers;
@@ -60,10 +62,10 @@ public class RateAndReviewsFragment extends AptoideBaseFragment<CommentsAdapter>
     implements ItemCommentAdderView<Review, CommentsAdapter> {
 
   private static final String TAG = RateAndReviewsFragment.class.getSimpleName();
+  @Inject AppNavigator appNavigator;
   private SharedPreferences preferences;
   private IdsRepository idsRepository;
   private DialogUtils dialogUtils;
-
   private long reviewId;
   private String storeName;
   private String appName;
@@ -148,9 +150,8 @@ public class RateAndReviewsFragment extends AptoideBaseFragment<CommentsAdapter>
       return true;
     }
     if (itemId == R.id.menu_install) {
-      getFragmentNavigator().navigateTo(AptoideApplication.getFragmentProvider()
-              .newAppViewFragment(packageName, storeName, AppViewFragment.OpenType.OPEN_AND_INSTALL),
-          true);
+      appNavigator.navigateWithPackageAndStoreNames(packageName, storeName,
+          NewAppViewFragment.OpenType.OPEN_AND_INSTALL);
       return true;
     }
     return super.onOptionsItemSelected(item);
@@ -193,7 +194,7 @@ public class RateAndReviewsFragment extends AptoideBaseFragment<CommentsAdapter>
 
   @Override public void load(boolean create, boolean refresh, Bundle savedInstanceState) {
     super.load(create, refresh, savedInstanceState);
-    Logger.d(TAG, "Other versions should refresh? " + create);
+    Logger.getInstance().d(TAG, "Other versions should refresh? " + create);
     fetchRating(refresh);
   }
 
@@ -282,6 +283,7 @@ public class RateAndReviewsFragment extends AptoideBaseFragment<CommentsAdapter>
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    getFragmentComponent(savedInstanceState).inject(this);
     preferences =
         ((AptoideApplication) getContext().getApplicationContext()).getDefaultSharedPreferences();
     tokenInvalidator =

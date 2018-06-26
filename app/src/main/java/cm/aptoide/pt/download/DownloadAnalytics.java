@@ -3,9 +3,9 @@ package cm.aptoide.pt.download;
 import android.net.ConnectivityManager;
 import android.support.annotation.NonNull;
 import android.telephony.TelephonyManager;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.database.realm.Download;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.view.DeepLinkManager;
@@ -22,6 +22,7 @@ public class DownloadAnalytics implements cm.aptoide.pt.downloadmanager.Analytic
   public static final String DOWNLOAD_COMPLETE_EVENT = "Download Complete";
   public static final String EDITORS_CHOICE_DOWNLOAD_COMPLETE_EVENT_NAME =
       "Editors Choice_Download_Complete";
+  public static final String DOWNLOAD_INTERACT = "Download_Interact";
   private final Map<String, DownloadEvent> cache;
   private final ConnectivityManager connectivityManager;
   private final TelephonyManager telephonyManager;
@@ -252,8 +253,17 @@ public class DownloadAnalytics implements cm.aptoide.pt.downloadmanager.Analytic
     }
   }
 
+  public void downloadInteractEvent(String packageName, String action) {
+    final HashMap<String, Object> data = new HashMap<>();
+    data.put("package_name", packageName);
+    data.put("action", action);
+
+    analyticsManager.logEvent(data, DOWNLOAD_INTERACT, AnalyticsManager.Action.CLICK,
+        navigationTracker.getViewName(true));
+  }
+
   public enum AppContext {
-    TIMELINE, APPVIEW, UPDATE_TAB, DOWNLOADS
+    TIMELINE, APPVIEW, UPDATE_TAB, AUTO_UPDATE, DOWNLOADS
   }
 
   public enum Origin {

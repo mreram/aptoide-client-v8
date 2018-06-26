@@ -10,12 +10,13 @@ import android.widget.TextView;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.addressbook.AddressBookAnalytics;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
+import cm.aptoide.analytics.AnalyticsManager;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.presenter.InviteFriendsContract;
 import cm.aptoide.pt.presenter.InviteFriendsPresenter;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.fragment.UIComponentFragment;
 import com.jakewharton.rxbinding.view.RxView;
 import javax.inject.Inject;
@@ -24,7 +25,7 @@ import javax.inject.Inject;
  * Created by jdandrade on 23/02/2017.
  */
 public class InviteFriendsFragment extends UIComponentFragment
-    implements InviteFriendsContract.View {
+    implements InviteFriendsContract.View, NotBottomNavigationView {
   public static final String OPEN_MODE = "OPEN_MODE";
   public static final String TAG = "TAG";
   @Inject AnalyticsManager analyticsManager;
@@ -94,7 +95,7 @@ public class InviteFriendsFragment extends UIComponentFragment
         message.setText(R.string.addressbook_we_werent_able_to_connect_you);
         break;
       default:
-        Logger.d(this.getClass()
+        Logger.getInstance().d(this.getClass()
             .getSimpleName(), "Wrong openMode type.");
     }
   }

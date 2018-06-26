@@ -18,9 +18,9 @@ import cm.aptoide.pt.actions.PermissionService;
 import cm.aptoide.pt.addressbook.AddressBookAnalytics;
 import cm.aptoide.pt.addressbook.data.ContactsRepository;
 import cm.aptoide.pt.addressbook.utils.ContactUtils;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
+import cm.aptoide.analytics.AnalyticsManager;
 import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.model.v7.FacebookModel;
 import cm.aptoide.pt.dataprovider.model.v7.TwitterModel;
@@ -31,6 +31,7 @@ import cm.aptoide.pt.presenter.AddressBookContract;
 import cm.aptoide.pt.presenter.AddressBookPresenter;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.design.ShowMessage;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.fragment.UIComponentFragment;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -51,7 +52,8 @@ import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.android.schedulers.AndroidSchedulers;
 
-public class AddressBookFragment extends UIComponentFragment implements AddressBookContract.View {
+public class AddressBookFragment extends UIComponentFragment
+    implements AddressBookContract.View, NotBottomNavigationView {
 
   public static final int TWITTER_REQUEST_CODE = 140;
   public static final int FACEBOOK_REQUEST_CODE = 64206;
@@ -115,7 +117,6 @@ public class AddressBookFragment extends UIComponentFragment implements AddressB
   // needs the views binded or the app will crash
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    getFragmentComponent(savedInstanceState).inject(this);
     AccessToken accessToken = AccessToken.getCurrentAccessToken();
     if (accessToken != null) {
       if (!accessToken.isExpired()) {
@@ -202,7 +203,7 @@ public class AddressBookFragment extends UIComponentFragment implements AddressB
     if (checked) {
       imageView.setImageResource(R.drawable.check);
     } else {
-      imageView.setImageResource(R.drawable.reload);
+      imageView.setImageResource(R.drawable.ic_refresh);
     }
   }
 
@@ -218,7 +219,7 @@ public class AddressBookFragment extends UIComponentFragment implements AddressB
           }
 
           @Override public void onError(FacebookException error) {
-            Logger.e(this.getClass()
+            Logger.getInstance().e(this.getClass()
                 .getName(), error.getMessage());
           }
         });

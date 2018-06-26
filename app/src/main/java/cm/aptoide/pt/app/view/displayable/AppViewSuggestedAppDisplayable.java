@@ -6,7 +6,7 @@
 package cm.aptoide.pt.app.view.displayable;
 
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
 import cm.aptoide.pt.app.AppViewSimilarAppAnalytics;
 import cm.aptoide.pt.app.view.GridAppDisplayable;
 import cm.aptoide.pt.dataprovider.model.v7.listapp.App;
@@ -26,7 +26,7 @@ public class AppViewSuggestedAppDisplayable extends GridAppDisplayable {
       AppViewSimilarAppAnalytics appViewSimilarAppAnalytics, NavigationTracker navigationTracker,
       StoreContext storeContext) {
     // TODO: 01-08-2017 neuro tags
-    super(app, null, true, navigationTracker, storeContext);
+    super(app, null, navigationTracker, storeContext);
 
     this.appViewSimilarAppAnalytics = appViewSimilarAppAnalytics;
   }

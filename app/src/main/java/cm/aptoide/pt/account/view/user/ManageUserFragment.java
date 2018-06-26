@@ -22,13 +22,14 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.view.ImagePickerErrorHandler;
 import cm.aptoide.pt.account.view.ImagePickerPresenter;
 import cm.aptoide.pt.account.view.exception.InvalidImageException;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.networking.image.ImageLoader;
 import cm.aptoide.pt.orientation.ScreenOrientationManager;
 import cm.aptoide.pt.presenter.CompositePresenter;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.view.BackButtonFragment;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.dialog.ImagePickerDialog;
 import com.jakewharton.rxbinding.support.design.widget.RxSnackbar;
 import com.jakewharton.rxbinding.view.RxView;
@@ -40,7 +41,8 @@ import rx.Completable;
 import rx.Observable;
 import rx.Single;
 
-public class ManageUserFragment extends BackButtonFragment implements ManageUserView {
+public class ManageUserFragment extends BackButtonFragment
+    implements ManageUserView, NotBottomNavigationView {
 
   private static final String EXTRA_USER_MODEL = "user_model";
   private static final String EXTRA_IS_EDIT = "is_edit";

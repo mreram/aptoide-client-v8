@@ -38,7 +38,7 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
     // Access the Realm schema in order to create, modify or delete classes and their fields.
 
     // DynamicRealm exposes an editable schema
-    Logger.w(TAG, "migrate(): from: " + oldVersion + " to: " + newVersion);
+    Logger.getInstance().w(TAG, "migrate(): from: " + oldVersion + " to: " + newVersion);
 
     RealmSchema schema = realm.getSchema();
 
@@ -68,7 +68,7 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
 
       oldVersion++;
 
-      Logger.w(TAG, "DB migrated to version " + oldVersion);
+      Logger.getInstance().w(TAG, "DB migrated to version " + oldVersion);
     }
 
     //  Migrate from version 1 (8076) to version 2 (8077)
@@ -103,7 +103,7 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
 
       oldVersion++;
 
-      Logger.w(TAG, "DB migrated to version " + oldVersion);
+      Logger.getInstance().w(TAG, "DB migrated to version " + oldVersion);
     }
 
     //  Migrate from version 2 (8077) to version 3 (8078)
@@ -160,7 +160,7 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
 
       oldVersion++;
 
-      Logger.w(TAG, "DB migrated to version " + oldVersion);
+      Logger.getInstance().w(TAG, "DB migrated to version " + oldVersion);
     }
 
     if (oldVersion == 8078) {
@@ -372,6 +372,17 @@ public class RealmToRealmDatabaseMigration implements RealmMigration {
 
       schema.get("Download")
           .removeField("scheduled");
+      oldVersion++;
+    }
+
+    if (oldVersion == 8093) {
+      schema.create("Installation")
+          .addField("packageName", String.class, FieldAttribute.PRIMARY_KEY)
+          .addField("icon", String.class)
+          .addField("name", String.class)
+          .addField("versionCode", int.class)
+          .addField("versionName", String.class);
+
       oldVersion++;
     }
   }

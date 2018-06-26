@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.view.BackButton;
 import cm.aptoide.pt.view.BackButtonFragment;
 
@@ -36,7 +36,7 @@ public class WizardPageTwoFragment extends BackButtonFragment {
     ((TextView) view.findViewById(R.id.title)).setText(R.string.wizard_title_viewpager_two);
     ((TextView) view.findViewById(R.id.description)).setText(
         R.string.wizard_sub_title_viewpager_two);
-    ((ImageView) view.findViewById(android.R.id.icon)).setImageResource(R.drawable.wizard_two);
+    ((ImageView) view.findViewById(android.R.id.icon)).setImageResource(R.drawable.wizard_2);
   }
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {

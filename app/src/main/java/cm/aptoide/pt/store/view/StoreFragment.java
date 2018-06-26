@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -25,11 +24,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.pt.app.AppNavigator;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.dataprovider.WebService;
@@ -46,6 +46,8 @@ import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetHomeRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetStoreRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.StoreContext;
+import cm.aptoide.pt.home.BottomNavigationActivity;
+import cm.aptoide.pt.home.BottomNavigationItem;
 import cm.aptoide.pt.search.SearchNavigator;
 import cm.aptoide.pt.search.SuggestionCursorAdapter;
 import cm.aptoide.pt.search.analytics.SearchAnalytics;
@@ -53,14 +55,11 @@ import cm.aptoide.pt.search.suggestions.TrendingManager;
 import cm.aptoide.pt.search.view.AppSearchSuggestionsView;
 import cm.aptoide.pt.search.view.SearchSuggestionsPresenter;
 import cm.aptoide.pt.share.ShareStoreHelper;
-import cm.aptoide.pt.social.view.TimelineFragment;
 import cm.aptoide.pt.store.StoreAnalytics;
 import cm.aptoide.pt.store.StoreCredentialsProvider;
 import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.store.StoreUtils;
-import cm.aptoide.pt.store.view.home.HomeFragment;
-import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.view.ThemeUtils;
 import cm.aptoide.pt.view.custom.AptoideViewPager;
@@ -82,12 +81,12 @@ import rx.subjects.PublishSubject;
  */
 public class StoreFragment extends BasePagerToolbarFragment {
 
-  private static final String TAG = StoreFragment.class.getName();
-
+  private static final BottomNavigationItem BOTTOM_NAVIGATION_ITEM = BottomNavigationItem.STORES;
   private final int PRIVATE_STORE_REQUEST_CODE = 20;
   protected PagerSlidingTabStrip pagerSlidingTabStrip;
   @Inject AnalyticsManager analyticsManager;
   @Inject NavigationTracker navigationTracker;
+  @Inject AppNavigator appNavigator;
   private AptoideAccountManager accountManager;
   private String storeName;
   private String title;
@@ -96,9 +95,8 @@ public class StoreFragment extends BasePagerToolbarFragment {
       new AptoideViewPager.SimpleOnPageChangeListener() {
         @Override public void onPageSelected(int position) {
           if (position == 0) {
-            navigationTracker.registerScreen(
-                ScreenTagHistory.Builder.build(HomeFragment.class.getSimpleName(), "home",
-                    storeContext));
+            navigationTracker.registerScreen(ScreenTagHistory.Builder.build(this.getClass()
+                .getSimpleName(), "home", storeContext.name()));
           }
         }
       };
@@ -112,7 +110,6 @@ public class StoreFragment extends BasePagerToolbarFragment {
   private Long storeId;
   private OkHttpClient httpClient;
   private Converter.Factory converterFactory;
-  private TimelineAnalytics timelineAnalytics;
   private TokenInvalidator tokenInvalidator;
   private StoreAnalytics storeAnalytics;
   private ShareStoreHelper shareStoreHelper;
@@ -127,6 +124,7 @@ public class StoreFragment extends BasePagerToolbarFragment {
   private SearchNavigator searchNavigator;
   private TrendingManager trendingManager;
   private SearchAnalytics searchAnalytics;
+  private BottomNavigationActivity bottomNavigationActivity;
 
   public static StoreFragment newInstance(long userId, String storeTheme, OpenType openType) {
     return newInstance(userId, storeTheme, null, openType);
@@ -171,7 +169,42 @@ public class StoreFragment extends BasePagerToolbarFragment {
 
   @Override public ScreenTagHistory getHistoryTracker() {
     return ScreenTagHistory.Builder.build(this.getClass()
-        .getSimpleName(), "", storeContext);
+        .getSimpleName(), "", storeContext != null ? storeContext.name() : null);
+  }
+
+  @Override public void onAttach(Activity activity) {
+    super.onAttach(activity);
+    if (activity instanceof BottomNavigationActivity) {
+      bottomNavigationActivity = ((BottomNavigationActivity) activity);
+    }
+  }
+
+  @Override public void onDestroy() {
+    super.onDestroy();
+    if (storeTheme != null) {
+      ThemeUtils.setStatusBarThemeColor(getActivity(), StoreTheme.get(defaultTheme));
+    }
+  }
+
+  @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    super.onCreateOptionsMenu(menu, inflater);
+    if (hasSearchFromStoreFragment()) {
+      inflater.inflate(R.menu.fragment_store, menu);
+
+      final MenuItem menuItem = menu.findItem(R.id.menu_item_search);
+      if (appSearchSuggestionsView != null && menuItem != null) {
+        appSearchSuggestionsView.initialize(menuItem);
+      } else if (menuItem != null) {
+        menuItem.setVisible(false);
+      } else {
+        menu.removeItem(R.id.menu_item_search);
+      }
+    }
+  }
+
+  @Override public void onDetach() {
+    bottomNavigationActivity = null;
+    super.onDetach();
   }
 
   @Override public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -189,15 +222,14 @@ public class StoreFragment extends BasePagerToolbarFragment {
     httpClient = application.getDefaultClient();
     converterFactory = WebService.getDefaultConverter();
     sharedPreferences = application.getDefaultSharedPreferences();
-    timelineAnalytics = application.getTimelineAnalytics();
     storeAnalytics = new StoreAnalytics(analyticsManager, navigationTracker);
     marketName = application.getMarketName();
     shareStoreHelper = new ShareStoreHelper(getActivity(), marketName);
 
     if (hasSearchFromStoreFragment()) {
       searchAnalytics = new SearchAnalytics(analyticsManager, navigationTracker);
-      searchNavigator =
-          new SearchNavigator(getFragmentNavigator(), storeName, application.getDefaultStoreName());
+      searchNavigator = new SearchNavigator(getFragmentNavigator(), storeName, storeTheme,
+          application.getDefaultStoreName(), appNavigator);
       trendingManager = application.getTrendingManager();
       crashReport = CrashReport.getInstance();
     }
@@ -229,6 +261,7 @@ public class StoreFragment extends BasePagerToolbarFragment {
     // execution-time generated ids for the desired resource
     ThemeUtils.setStatusBarThemeColor(getActivity(), StoreTheme.get(defaultTheme));
     ThemeUtils.setAptoideTheme(getActivity(), defaultTheme);
+    ThemeUtils.setStoreTheme(getActivity(), defaultTheme);
 
     if (pagerSlidingTabStrip != null) {
       pagerSlidingTabStrip.setOnTabReselectedListener(null);
@@ -242,30 +275,12 @@ public class StoreFragment extends BasePagerToolbarFragment {
   @Override protected void setupViewPager() {
     super.setupViewPager();
     pagerSlidingTabStrip = (PagerSlidingTabStrip) getView().findViewById(R.id.tabs);
+    pagerSlidingTabStrip.setBackgroundResource(StoreTheme.get(storeTheme)
+        .getGradientDrawable());
 
     if (pagerSlidingTabStrip != null) {
       pagerSlidingTabStrip.setViewPager(viewPager);
     }
-
-    /*
-     *  Click on tab listener
-     */
-    StorePagerAdapter adapter = (StorePagerAdapter) viewPager.getAdapter();
-    pagerSlidingTabStrip.setOnTabReselectedListener(position -> {
-      if (Event.Name.getUserTimeline.equals(adapter.getEventName(position))) {
-        //TODO We should not call fragment public methods since we do NOT know about its internal
-        //life cycle. A fragment A should call its activity in order to communicate with
-        //fragment B. Then when fragment B is ready it should register a listener
-        //with its activity in order receive external communication. Activity
-        //should buffer calls if there is no listener registered and deliver them
-        //after registration happens.
-        for (Fragment fragment : getChildFragmentManager().getFragments()) {
-          if (fragment != null && fragment instanceof TimelineFragment) {
-            ((TimelineFragment) fragment).goToTop();
-          }
-        }
-      }
-    });
 
     /* Be careful maintaining this code
      * this affects both the main view pager when we open app
@@ -276,12 +291,6 @@ public class StoreFragment extends BasePagerToolbarFragment {
     viewPager.addOnPageChangeListener(new AptoideViewPager.SimpleOnPageChangeListener() {
       @Override public void onPageSelected(int position) {
         StorePagerAdapter adapter = (StorePagerAdapter) viewPager.getAdapter();
-        if (Event.Name.getUserTimeline.equals(adapter.getEventName(position))) {
-          timelineAnalytics.sendTimelineTabOpened();
-        } else if (Event.Name.myStores.equals(adapter.getEventName(position))
-            && storeContext.equals(StoreContext.home)) {
-          storeAnalytics.sendStoreTabOpenedEvent();
-        }
         if (storeContext.equals(StoreContext.meta)) {
           storeAnalytics.sendStoreInteractEvent("Open Tab", adapter.getPageTitle(position)
               .toString(), storeName);
@@ -317,29 +326,6 @@ public class StoreFragment extends BasePagerToolbarFragment {
     }
   }
 
-  @Override public void onDestroy() {
-    super.onDestroy();
-    if (storeTheme != null) {
-      ThemeUtils.setStatusBarThemeColor(getActivity(), StoreTheme.get(defaultTheme));
-    }
-  }
-
-  @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    super.onCreateOptionsMenu(menu, inflater);
-    if (hasSearchFromStoreFragment()) {
-      inflater.inflate(R.menu.fragment_store, menu);
-
-      final MenuItem menuItem = menu.findItem(R.id.menu_item_search);
-      if (appSearchSuggestionsView != null && menuItem != null) {
-        appSearchSuggestionsView.initialize(menuItem);
-      } else if (menuItem != null) {
-        menuItem.setVisible(false);
-      } else {
-        menu.removeItem(R.id.menu_item_search);
-      }
-    }
-  }
-
   private void handleOptionsItemSelected(Observable<MenuItem> toolbarMenuItemClick) {
     getLifecycle().filter(event -> event == LifecycleEvent.RESUME)
         .flatMap(__ -> toolbarMenuItemClick)
@@ -354,6 +340,9 @@ public class StoreFragment extends BasePagerToolbarFragment {
 
   @Override public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+    if (bottomNavigationActivity != null) {
+      bottomNavigationActivity.requestFocus(BOTTOM_NAVIGATION_ITEM);
+    }
     final SuggestionCursorAdapter suggestionCursorAdapter =
         new SuggestionCursorAdapter(getContext());
 
@@ -573,10 +562,12 @@ public class StoreFragment extends BasePagerToolbarFragment {
 
   @Override protected void setupToolbarDetails(Toolbar toolbar) {
     toolbar.setTitle(title);
+    toolbar.setBackgroundResource(StoreTheme.get(storeTheme)
+        .getGradientDrawable());
     if (userId != null) {
-      toolbar.setLogo(R.drawable.ic_user_icon);
+      toolbar.setLogo(R.drawable.ic_user_shape_white);
     } else {
-      toolbar.setLogo(R.drawable.ic_store);
+      toolbar.setLogo(R.drawable.ic_store_white);
     }
   }
 

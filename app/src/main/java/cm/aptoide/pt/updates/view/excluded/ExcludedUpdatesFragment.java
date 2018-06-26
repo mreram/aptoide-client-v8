@@ -10,13 +10,14 @@ import android.view.View;
 import android.widget.TextView;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.accessors.UpdateAccessor;
 import cm.aptoide.pt.database.realm.Update;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.utils.design.ShowMessage;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.fragment.AptoideBaseFragment;
 import cm.aptoide.pt.view.recycler.BaseAdapter;
 import com.trello.rxlifecycle.android.FragmentEvent;
@@ -26,7 +27,8 @@ import java.util.List;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 
-public class ExcludedUpdatesFragment extends AptoideBaseFragment<BaseAdapter> {
+public class ExcludedUpdatesFragment extends AptoideBaseFragment<BaseAdapter>
+    implements NotBottomNavigationView {
 
   private static final String TAG = ExcludedUpdatesFragment.class.getSimpleName();
   private TextView emptyData;
@@ -49,7 +51,7 @@ public class ExcludedUpdatesFragment extends AptoideBaseFragment<BaseAdapter> {
 
   @Override public void load(boolean create, boolean refresh, Bundle savedInstanceState) {
     super.load(create, refresh, savedInstanceState);
-    Logger.d(TAG, "refresh excluded updates? " + (create ? "yes" : "no"));
+    Logger.getInstance().d(TAG, "refresh excluded updates? " + (create ? "yes" : "no"));
     fetchExcludedUpdates();
   }
 

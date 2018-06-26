@@ -158,7 +158,7 @@ import rx.subscriptions.Subscriptions;
         // WS success listener
         final SuccessRequestListener<BaseV7Response> successRequestListener = response -> {
           if (response.isOk()) {
-            Logger.d(TAG, "review added");
+            Logger.getInstance().d(TAG, "review added");
             ShowMessage.asSnack(activity, R.string.review_success);
             ManagerPreferences.setForceServerRefreshFlag(true, sharedPreferences);
             subscriber.onNext(GenericDialogs.EResponse.YES);
@@ -211,7 +211,8 @@ import rx.subscriptions.Subscriptions;
 
   public void setBulletText(TextView textView, String text) {
     SpannableString spannable = new SpannableString(text);
-    spannable.setSpan(new BulletSpan(16), 0, text.length(), 0);
+    spannable.setSpan(new BulletSpan(16, resources.getColor(R.color.default_orange_gradient_end)),
+        0, text.length(), 0);
 
     textView.setText(spannable);
   }
@@ -275,7 +276,7 @@ import rx.subscriptions.Subscriptions;
 
       final SuccessRequestListener<BaseV7Response> successRequestListener = response -> {
         if (response.isOk()) {
-          Logger.d(TAG, "review added");
+          Logger.getInstance().d(TAG, "review added");
           ShowMessage.asSnack(activity, R.string.review_success);
           ManagerPreferences.setForceServerRefreshFlag(true, sharedPreferences);
           if (onPositiveCallback != null) {

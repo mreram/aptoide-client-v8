@@ -1,6 +1,5 @@
 package cm.aptoide.pt.view.fragment;
 
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
@@ -13,7 +12,7 @@ import android.view.View;
 import android.widget.TextView;
 import cm.aptoide.pt.AptoideApplication;
 import cm.aptoide.pt.R;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.database.AccessorFactory;
 import cm.aptoide.pt.database.realm.Store;
@@ -29,11 +28,13 @@ import cm.aptoide.pt.store.StoreCredentialsProviderImpl;
 import cm.aptoide.pt.store.StoreTheme;
 import cm.aptoide.pt.store.StoreUtils;
 import cm.aptoide.pt.utils.AptoideUtils;
+import cm.aptoide.pt.view.NotBottomNavigationView;
 import cm.aptoide.pt.view.ThemeUtils;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 
-public class DescriptionFragment extends BaseLoaderToolbarFragment {
+public class DescriptionFragment extends BaseLoaderToolbarFragment
+    implements NotBottomNavigationView {
 
   private static final String TAG = DescriptionFragment.class.getSimpleName();
 
@@ -181,7 +182,7 @@ public class DescriptionFragment extends BaseLoaderToolbarFragment {
             finishLoading();
           }, false);
     } else {
-      Logger.e(TAG, "App id unavailable");
+      Logger.getInstance().e(TAG, "App id unavailable");
       setDataUnavailable();
     }
   }
@@ -236,9 +237,9 @@ public class DescriptionFragment extends BaseLoaderToolbarFragment {
     ActionBar bar = ((AppCompatActivity) getActivity()).getSupportActionBar();
     if (bar != null) {
       ThemeUtils.setStatusBarThemeColor(getActivity(), StoreTheme.get(storeTheme));
-      bar.setBackgroundDrawable(new ColorDrawable(getActivity().getResources()
-          .getColor(StoreTheme.get(storeTheme)
-              .getPrimaryColor())));
+      bar.setBackgroundDrawable(getActivity().getResources()
+          .getDrawable(StoreTheme.get(storeTheme)
+              .getGradientDrawable()));
     }
   }
 

@@ -8,6 +8,7 @@ import cm.aptoide.pt.dataprovider.WebService;
 import cm.aptoide.pt.dataprovider.exception.AptoideWsV7Exception;
 import cm.aptoide.pt.dataprovider.exception.NoNetworkConnectionException;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
+import cm.aptoide.pt.dataprovider.model.v7.BaseV7EndlessDataListResponse;
 import cm.aptoide.pt.dataprovider.model.v7.BaseV7Response;
 import cm.aptoide.pt.dataprovider.model.v7.GetApp;
 import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
@@ -30,7 +31,6 @@ import cm.aptoide.pt.dataprovider.model.v7.store.GetStore;
 import cm.aptoide.pt.dataprovider.model.v7.store.GetStoreDisplays;
 import cm.aptoide.pt.dataprovider.model.v7.store.GetStoreMeta;
 import cm.aptoide.pt.dataprovider.model.v7.store.ListStores;
-import cm.aptoide.pt.dataprovider.model.v7.timeline.GetUserTimeline;
 import cm.aptoide.pt.dataprovider.util.HashMapNotNull;
 import cm.aptoide.pt.dataprovider.util.ToRetryThrowable;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
@@ -46,6 +46,9 @@ import cm.aptoide.pt.dataprovider.ws.v7.billing.GetPurchasesRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetServicesRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.GetTransactionRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.billing.UpdateAuthorizationRequest;
+import cm.aptoide.pt.dataprovider.ws.v7.home.GetHomeBundlesRequest;
+import cm.aptoide.pt.dataprovider.ws.v7.home.GetSocialRecommendsRequest;
+import cm.aptoide.pt.dataprovider.ws.v7.home.SocialResponse;
 import cm.aptoide.pt.dataprovider.ws.v7.listapps.ListAppVersionsRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.listapps.ListAppsUpdatesRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.post.CardPreviewRequest;
@@ -307,10 +310,6 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
         @Body ListSearchAppsRequest.Body body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
-    @POST Observable<GetUserTimeline> getUserTimeline(@Url String url,
-        @Body GetUserTimelineRequest.Body body,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
-
     @POST("listAppVersions") Observable<ListAppVersions> listAppVersions(
         @Body ListAppVersionsRequest.Body body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
@@ -343,10 +342,6 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
     @POST("setComment") Observable<SetComment> postStoreComment(@Body PostCommentForStore.Body body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
 
-    @POST("setComment") Observable<SetComment> postTimelineComment(
-        @Body PostCommentForTimelineArticle.Body body,
-        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
-
     @POST("setReviewVote") Observable<BaseV7Response> setReviewVote(
         @Body SetReviewRatingRequest.Body body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
@@ -355,11 +350,6 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
     Observable<BaseV7Response> addEvent(@Path(value = "name") String name,
         @Path(value = "action") String action, @Path(value = "context") String context,
         @Body DownloadInstallAnalyticsBaseBody body);
-
-    @POST("user/addEvent/name={name}/action={action}/context={context}")
-    Observable<BaseV7Response> addEvent(@Path(value = "name") String name,
-        @Path(value = "action") String action, @Path(value = "context") String context,
-        @Body AnalyticsEventRequest.Body body);
 
     @POST("user/addEvent/name={name}/action={action}/context={context}")
     Observable<BaseV7Response> addEvent(@Path(value = "name") String name,
@@ -525,6 +515,21 @@ public abstract class V7<U, B extends RefreshBody> extends WebService<V7.Interfa
     @POST("user/follower/set/") Observable<BaseV7Response> unfollowUser(
         @Body UnfollowUserRequest.Body body,
         @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+
+    @POST("getStoreWidgets/") Observable<GetStoreWidgets> getHomeBundles(
+        @Body GetHomeBundlesRequest.Body body,
+        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+
+    @POST("{url}") Observable<SocialResponse> getRecommends(
+        @Path(value = "url", encoded = true) String path,
+        @Body GetSocialRecommendsRequest.Body body,
+        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache);
+
+    @POST("appcoins/ads/get/limit={limit}")
+    Observable<BaseV7EndlessDataListResponse<AppCoinsRewardApp>> getAppCoinsAds(
+        @Body GetAppCoinsAdsRequest.Body body,
+        @Header(WebService.BYPASS_HEADER_KEY) boolean bypassCache,
+        @Path(value = "limit") int limit);
   }
 }
 

@@ -5,6 +5,7 @@
 
 package cm.aptoide.pt.app.view.widget;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -25,10 +26,10 @@ import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.actions.PermissionManager;
 import cm.aptoide.pt.actions.PermissionService;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.AnalyticsManager;
 import cm.aptoide.pt.app.AppBoughtReceiver;
+import cm.aptoide.pt.app.AppNavigator;
 import cm.aptoide.pt.app.AppViewAnalytics;
-import cm.aptoide.pt.app.view.AppViewFragment;
 import cm.aptoide.pt.app.view.AppViewNavigator;
 import cm.aptoide.pt.app.view.displayable.AppViewInstallDisplayable;
 import cm.aptoide.pt.crashreports.CrashReport;
@@ -54,11 +55,11 @@ import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.preferences.managed.ManagerPreferences;
 import cm.aptoide.pt.timeline.SocialRepository;
+import cm.aptoide.pt.timeline.TimelineAnalytics;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.utils.GenericDialogs;
 import cm.aptoide.pt.utils.SimpleSubscriber;
 import cm.aptoide.pt.utils.design.ShowMessage;
-import cm.aptoide.pt.view.dialog.SharePreviewDialog;
 import cm.aptoide.pt.view.recycler.widget.Widget;
 import com.jakewharton.rxbinding.view.RxView;
 import okhttp3.OkHttpClient;
@@ -429,11 +430,8 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                           .observeOn(AndroidSchedulers.mainThread())
                           .subscribe(progress -> {
                             // TODO: 12/07/2017 this code doesnt run
-                            Logger.d(TAG, "Installing");
+                            Logger.getInstance().d(TAG, "Installing");
                           }, throwable -> crashReport.log(throwable)));
-                  appViewAnalytics.downgradeDialogContinue();
-                } else {
-                  appViewAnalytics.downgradeDialogCancel();
                 }
               }
             });
@@ -514,29 +512,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                 .doOnCompleted(() -> {
                   if (accountManager.isLoggedIn() && ManagerPreferences.isShowPreviewDialog(
                       sharedPreferences) && isCreateStoreUserPrivacyEnabled) {
-                    SharePreviewDialog sharePreviewDialog =
-                        new SharePreviewDialog(displayable, accountManager, true,
-                            SharePreviewDialog.SharePreviewOpenMode.SHARE,
-                            displayable.getTimelineAnalytics(), sharedPreferences);
-                    AlertDialog.Builder alertDialog =
-                        sharePreviewDialog.getPreviewDialogBuilder(getContext());
-
-                    sharePreviewDialog.showShareCardPreviewDialog(displayable.getPojo()
-                            .getNodes()
-                            .getMeta()
-                            .getData()
-                            .getPackageName(), displayable.getPojo()
-                            .getNodes()
-                            .getMeta()
-                            .getData()
-                            .getStore()
-                            .getId(), "install", context, sharePreviewDialog, alertDialog,
-                        socialRepository);
-                  } else if (!accountManager.isLoggedIn()
-                      && (ManagerPreferences.getNotLoggedInInstallClicks(sharedPreferences) == 2
-                      || ManagerPreferences.getNotLoggedInInstallClicks(sharedPreferences) == 4)) {
-                    accountNavigator.navigateToNotLoggedInViewForResult(
-                        AppViewFragment.LOGIN_REQUEST_CODE, app);
+                    showRecommendsDialog(displayable, context);
                   }
                   ShowMessage.asSnack(v, installOrUpgradeMsg);
                 });
@@ -579,6 +555,58 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
         installHandler.onClick(v);
       }
     };
+  }
+
+  private void showRecommendsDialog(AppViewInstallDisplayable displayable, Context context) {
+    LayoutInflater inflater = LayoutInflater.from(getContext());
+    AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+    View alertDialogView = inflater.inflate(R.layout.logged_in_share, null);
+    alertDialog.setView(alertDialogView);
+    String packageName = displayable.getPojo()
+        .getNodes()
+        .getMeta()
+        .getData()
+        .getPackageName();
+
+    alertDialogView.findViewById(R.id.continue_button)
+        .setOnClickListener(view -> {
+          socialRepository.share(packageName, displayable.getPojo()
+              .getNodes()
+              .getMeta()
+              .getData()
+              .getStore()
+              .getId(), "install");
+          ShowMessage.asSnack((Activity) context, R.string.social_timeline_share_dialog_title);
+          displayable.getTimelineAnalytics()
+              .sendRecommendedAppInteractEvent(packageName, "Recommend");
+          displayable.getTimelineAnalytics()
+              .sendSocialCardPreviewActionEvent(
+                  TimelineAnalytics.SOCIAL_CARD_ACTION_SHARE_CONTINUE);
+          alertDialog.dismiss();
+        });
+
+    alertDialogView.findViewById(R.id.skip_button)
+        .setOnClickListener(view -> {
+          displayable.getTimelineAnalytics()
+              .sendRecommendedAppInteractEvent(packageName, "Skip");
+          displayable.getTimelineAnalytics()
+              .sendSocialCardPreviewActionEvent(TimelineAnalytics.SOCIAL_CARD_ACTION_SHARE_CANCEL);
+          alertDialog.dismiss();
+        });
+
+    alertDialogView.findViewById(R.id.dont_show_button)
+        .setOnClickListener(view -> {
+          ManagerPreferences.setShowPreviewDialog(false, sharedPreferences);
+          displayable.getTimelineAnalytics()
+              .sendRecommendedAppInteractEvent(packageName, "Don't show again");
+          displayable.getTimelineAnalytics()
+              .sendSocialCardPreviewActionEvent(TimelineAnalytics.SOCIAL_CARD_ACTION_SHARE_CANCEL);
+          alertDialog.dismiss();
+        });
+
+    alertDialog.show();
+    displayable.getTimelineAnalytics()
+        .sendRecommendedAppImpressionEvent(packageName);
   }
 
   private void showDialogError(String title, String message) {
@@ -627,7 +655,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
                 .toObservable()
                 .doOnSubscribe(() -> setupEvents(download, getInstallType(download.getAction()),
                     getOrigin(download.getAction()))))
-            .subscribe(downloadProgress -> Logger.d(TAG, "Installing"),
+            .subscribe(downloadProgress -> Logger.getInstance().d(TAG, "Installing"),
                 err -> crashReport.log(err)));
       });
     }
@@ -730,7 +758,7 @@ public class AppViewInstallWidget extends Widget<AppViewInstallDisplayable> {
 
   private AppViewNavigator getAppViewNavigator() {
     return new AppViewNavigator(getFragmentNavigator(), getActivityNavigator(), isMultiStoreSearch,
-        defaultStoreName);
+        defaultStoreName, new AppNavigator(getFragmentNavigator()));
   }
 
   private void findTrustedVersion(GetAppMeta.App app, ListAppVersions appVersions) {

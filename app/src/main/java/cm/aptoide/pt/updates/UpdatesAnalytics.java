@@ -1,7 +1,7 @@
 package cm.aptoide.pt.updates;
 
-import cm.aptoide.pt.analytics.NavigationTracker;
-import cm.aptoide.pt.analytics.analytics.AnalyticsManager;
+import cm.aptoide.analytics.implementation.navigation.NavigationTracker;
+import cm.aptoide.analytics.AnalyticsManager;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,6 +12,7 @@ import java.util.Map;
 public class UpdatesAnalytics {
 
   public final static String UPDATE_EVENT = "Updates";
+  public final static String OPEN_APP_VIEW = "Open App View";
   private AnalyticsManager analyticsManager;
   private NavigationTracker navigationTracker;
 

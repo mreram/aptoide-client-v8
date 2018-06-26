@@ -4,11 +4,16 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.view.WindowManager;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
+import cm.aptoide.pt.dataprovider.model.v7.GetStoreWidgets;
+import cm.aptoide.pt.dataprovider.model.v7.Type;
 import cm.aptoide.pt.dataprovider.model.v7.store.GetStore;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
 import cm.aptoide.pt.dataprovider.ws.v7.V7;
 import cm.aptoide.pt.dataprovider.ws.v7.V7Url;
+import cm.aptoide.pt.dataprovider.ws.v7.WSWidgetsUtils;
+import java.util.Collections;
+import java.util.List;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import rx.Observable;
@@ -78,7 +83,8 @@ public class GetUserRequest extends V7<GetStore, GetUserRequest.Body> {
               isGooglePlayServicesAvailable, partnerId, accountMature,
               ((BodyInterceptor<BaseBody>) bodyInterceptor), httpClient, converterFactory, filters,
               tokenInvalidator, sharedPreferences, resources, windowManager, connectivityManager,
-              versionCodeProvider, bypassServerCache);
+              versionCodeProvider, bypassServerCache,
+              Type.ADS.getPerLineCount(resources, windowManager), Collections.emptyList());
         })
         .toList()
         .flatMapIterable(wsWidgets -> getStoreWidgets.getNodes()

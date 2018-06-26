@@ -12,28 +12,26 @@ import cm.aptoide.pt.app.view.GridAppWidget;
 import cm.aptoide.pt.app.view.OfficialAppDisplayable;
 import cm.aptoide.pt.app.view.OfficialAppWidget;
 import cm.aptoide.pt.app.view.OtherVersionDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewAdDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewDescriptionDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewDeveloperDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewFlagThisDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewInstallDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewOtherVersionsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewRateAndCommentsDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewRateResultsDisplayable;
-import cm.aptoide.pt.app.view.displayable.AppViewScreenshotsDisplayable;
+import cm.aptoide.pt.app.view.displayable.AppViewRewardAppDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewStoreDisplayable;
+import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAdDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppDisplayable;
 import cm.aptoide.pt.app.view.displayable.AppViewSuggestedAppsDisplayable;
-import cm.aptoide.pt.app.view.widget.AppViewAdWidget;
 import cm.aptoide.pt.app.view.widget.AppViewDescriptionWidget;
-import cm.aptoide.pt.app.view.widget.AppViewDeveloperWidget;
 import cm.aptoide.pt.app.view.widget.AppViewFlagThisWidget;
 import cm.aptoide.pt.app.view.widget.AppViewInstallWidget;
 import cm.aptoide.pt.app.view.widget.AppViewOtherVersionsWidget;
 import cm.aptoide.pt.app.view.widget.AppViewRateAndReviewsWidget;
 import cm.aptoide.pt.app.view.widget.AppViewRateResultsWidget;
-import cm.aptoide.pt.app.view.widget.AppViewScreenshotsWidget;
+import cm.aptoide.pt.app.view.widget.AppViewRewardAppWidget;
 import cm.aptoide.pt.app.view.widget.AppViewStoreWidget;
+import cm.aptoide.pt.app.view.widget.AppViewSuggestedAdWidget;
 import cm.aptoide.pt.app.view.widget.AppViewSuggestedAppWidget;
 import cm.aptoide.pt.app.view.widget.AppViewSuggestedAppsWidget;
 import cm.aptoide.pt.app.view.widget.OtherVersionWidget;
@@ -52,6 +50,7 @@ import cm.aptoide.pt.download.view.active.ActiveDownloadsHeaderDisplayable;
 import cm.aptoide.pt.download.view.active.ActiveDownloadsHeaderWidget;
 import cm.aptoide.pt.download.view.completed.CompletedDownloadDisplayable;
 import cm.aptoide.pt.download.view.completed.CompletedDownloadWidget;
+import cm.aptoide.pt.home.GridAppCoinsRewardAppsDisplayable;
 import cm.aptoide.pt.logger.Logger;
 import cm.aptoide.pt.reviews.ReviewsLanguageFilterDisplayable;
 import cm.aptoide.pt.reviews.ReviewsLanguageFilterWidget;
@@ -106,6 +105,7 @@ import cm.aptoide.pt.view.recycler.widget.EmptyWidget;
 import cm.aptoide.pt.view.recycler.widget.FooterRowWidget;
 import cm.aptoide.pt.view.recycler.widget.FooterWidget;
 import cm.aptoide.pt.view.recycler.widget.GridAdWidget;
+import cm.aptoide.pt.view.recycler.widget.GridAppCoinsRewardAppsWidget;
 import cm.aptoide.pt.view.recycler.widget.GridDisplayWidget;
 import cm.aptoide.pt.view.recycler.widget.MessageWhiteBgWidget;
 import cm.aptoide.pt.view.recycler.widget.ProgressBarWidget;
@@ -180,6 +180,8 @@ public class DisplayableWidgetMapping {
         new DisplayableWidgetMapping(GridStoreMetaWidget.class, GridStoreMetaDisplayable.class));
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping(GridAdWidget.class, GridAdDisplayable.class));
+    displayableWidgetMappings.add(new DisplayableWidgetMapping(GridAppCoinsRewardAppsWidget.class,
+        GridAppCoinsRewardAppsDisplayable.class));
 
     // Multi Layout
     displayableWidgetMappings.add(
@@ -208,14 +210,11 @@ public class DisplayableWidgetMapping {
     displayableWidgetMappings.add(new DisplayableWidgetMapping(AppViewDescriptionWidget.class,
         AppViewDescriptionDisplayable.class));
 
-    displayableWidgetMappings.add(new DisplayableWidgetMapping(AppViewDeveloperWidget.class,
-        AppViewDeveloperDisplayable.class));
-
-    displayableWidgetMappings.add(new DisplayableWidgetMapping(AppViewScreenshotsWidget.class,
-        AppViewScreenshotsDisplayable.class));
-
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping(AppViewInstallWidget.class, AppViewInstallDisplayable.class));
+
+    displayableWidgetMappings.add(new DisplayableWidgetMapping((AppViewRewardAppWidget.class),
+        AppViewRewardAppDisplayable.class));
 
     displayableWidgetMappings.add(new DisplayableWidgetMapping(AppViewRateAndReviewsWidget.class,
         AppViewRateAndCommentsDisplayable.class));
@@ -238,8 +237,8 @@ public class DisplayableWidgetMapping {
     displayableWidgetMappings.add(new DisplayableWidgetMapping(AppViewSuggestedAppWidget.class,
         AppViewSuggestedAppDisplayable.class));
 
-    displayableWidgetMappings.add(
-        new DisplayableWidgetMapping(AppViewAdWidget.class, AppViewAdDisplayable.class));
+    displayableWidgetMappings.add(new DisplayableWidgetMapping(AppViewSuggestedAdWidget.class,
+        AppViewSuggestedAdDisplayable.class));
 
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping(OtherVersionWidget.class, OtherVersionDisplayable.class));
@@ -306,7 +305,6 @@ public class DisplayableWidgetMapping {
 
     displayableWidgetMappings.add(
         new DisplayableWidgetMapping((LoginWidget.class), LoginDisplayable.class));
-
     return displayableWidgetMappings;
   }
 
@@ -318,7 +316,7 @@ public class DisplayableWidgetMapping {
           .log(e);
       String errMsg =
           String.format("Error instantiating displayable '%s'", displayableClass.getName());
-      Logger.e(TAG, errMsg, e);
+      Logger.getInstance().e(TAG, errMsg, e);
       throw new RuntimeException(errMsg);
     }
   }
@@ -343,7 +341,7 @@ public class DisplayableWidgetMapping {
       CrashReport.getInstance()
           .log(e);
       String errMsg = String.format("Error instantiating widget '%s'", widgetClass.getName());
-      Logger.e(TAG, errMsg, e);
+      Logger.getInstance().e(TAG, errMsg, e);
       throw new RuntimeException(errMsg);
     }
   }

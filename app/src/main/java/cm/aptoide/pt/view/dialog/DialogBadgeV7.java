@@ -8,13 +8,13 @@ package cm.aptoide.pt.view.dialog;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.TextView;
 import cm.aptoide.pt.R;
 import cm.aptoide.pt.dataprovider.model.v7.Malware;
@@ -41,19 +41,17 @@ public class DialogBadgeV7 extends BaseDialog {
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-      setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light);
-    } else {
-      setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Dialog);
-    }
+    setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Dialog);
     setRetainInstance(true);
   }
 
   @Override public void onStart() {
     super.onStart();
-    getDialog().getWindow()
-        .setBackgroundDrawable(
-            new ColorDrawable(getResources().getColor(android.R.color.transparent)));
+    Window window = getDialog().getWindow();
+    if (window != null) {
+      window.setBackgroundDrawable(
+          new ColorDrawable(getResources().getColor(android.R.color.transparent)));
+    }
   }
 
   @NonNull @Override public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -128,7 +126,7 @@ public class DialogBadgeV7 extends BaseDialog {
             v.findViewById(R.id.tr_signature)
                 .setVisibility(View.VISIBLE);
             ((TextView) v.findViewById(R.id.tv_reason_signature_validation)).setText(
-                getString(R.string.reason_signature));
+                getString(R.string.appviewbadge_message_signature_matches));
             break;
           case failed:
             // still in study by the UX team
@@ -137,7 +135,7 @@ public class DialogBadgeV7 extends BaseDialog {
             v.findViewById(R.id.iv_signature)
                 .setVisibility(View.INVISIBLE);
             ((TextView) v.findViewById(R.id.tv_reason_signature_validation)).setText(
-                getString(R.string.reason_failed));
+                getString(R.string.appviewbadge_message_signature_different));
             break;
           case blacklisted:
             // still in study by the UX team

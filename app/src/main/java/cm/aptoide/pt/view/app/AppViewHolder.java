@@ -2,15 +2,13 @@ package cm.aptoide.pt.view.app;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import cm.aptoide.pt.home.HomeBundle;
 
-/**
- * Created by trinkes on 19/10/2017.
- */
-
-abstract class AppViewHolder extends RecyclerView.ViewHolder {
+public abstract class AppViewHolder extends RecyclerView.ViewHolder {
   public AppViewHolder(View itemView) {
     super(itemView);
   }
 
-  abstract void setApp(Application app);
+  public abstract void setApp(Application app, HomeBundle homeBundle, int position,
+      int bundlePosition);
 }

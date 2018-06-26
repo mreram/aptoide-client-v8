@@ -1,12 +1,16 @@
 package cm.aptoide.pt.search.view;
 
-import cm.aptoide.pt.presenter.View;
+import android.view.MenuItem;
 import cm.aptoide.pt.search.model.SearchAdResult;
+import cm.aptoide.pt.search.model.SearchAdResultWrapper;
 import cm.aptoide.pt.search.model.SearchAppResult;
+import cm.aptoide.pt.search.model.SearchAppResultWrapper;
+import cm.aptoide.pt.search.suggestions.SearchQueryEvent;
+import com.jakewharton.rxbinding.support.v7.widget.SearchViewQueryTextEvent;
 import java.util.List;
 import rx.Observable;
 
-public interface SearchResultView extends View {
+public interface SearchResultView extends SearchSuggestionsView {
 
   void showFollowedStoresResult();
 
@@ -40,8 +44,6 @@ public interface SearchResultView extends View {
 
   void setAllStoresAdsEmpty();
 
-  Observable<Integer> showPopup(boolean hasVersions, android.view.View anchor);
-
   String getDefaultTheme();
 
   Observable<Void> followedStoresResultReachedBottom();
@@ -58,6 +60,48 @@ public interface SearchResultView extends View {
 
   void hideNonFollowedStoresTab();
 
+  Observable<Void> searchSetup();
+
+  void toggleSuggestionsView();
+
+  void toggleTrendingView();
+
+  void hideSuggestionsViews();
+
+  boolean isSearchViewExpanded();
+
+  Observable<SearchQueryEvent> listenToSuggestionClick();
+
+  Observable<Void> toolbarClick();
+
+  Observable<MenuItem> searchMenuItemClick();
+
+  Observable<SearchAdResultWrapper> onAdClicked();
+
+  Observable<SearchAppResultWrapper> onViewItemClicked();
+
+  Observable<SearchViewQueryTextEvent> queryChanged();
+
+  void queryEvent(SearchViewQueryTextEvent event);
+
+  boolean shouldFocusInSearchBar();
+
+  void scrollToTop();
+
+  boolean hasResults();
+
+  void disableUpNavigation();
+
+  boolean shouldHideUpNavigation();
+
+  void setUnsubmittedQuery(String query);
+
+  void clearUnsubmittedQuery();
+
+  void setVisibilityOnRestore();
+
+  boolean shouldShowSuggestions();
+
   interface Model {
 
     List<SearchAppResult> getFollowedStoresSearchAppResults();
@@ -67,6 +111,10 @@ public interface SearchResultView extends View {
     String getCurrentQuery();
 
     String getStoreName();
+
+    String getDefaultStoreName();
+
+    String getStoreTheme();
 
     boolean isOnlyTrustedApps();
 

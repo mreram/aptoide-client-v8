@@ -1,30 +1,23 @@
 package cm.aptoide.pt.account.view.store;
 
 import android.app.Activity;
+import cm.aptoide.pt.home.BottomNavigationNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.navigator.Result;
-import cm.aptoide.pt.store.view.home.HomeFragment;
 
 public class ManageStoreNavigator {
 
   private final FragmentNavigator fragmentNavigator;
-  private String defaultStore;
-  private String defaultTheme;
+  private final BottomNavigationNavigator bottomNavigationNavigator;
 
-  public ManageStoreNavigator(FragmentNavigator fragmentNavigator, String defaultStore,
-      String defaultTheme) {
+  public ManageStoreNavigator(FragmentNavigator fragmentNavigator,
+      BottomNavigationNavigator bottomNavigationNavigator) {
     this.fragmentNavigator = fragmentNavigator;
-    this.defaultStore = defaultStore;
-    this.defaultTheme = defaultTheme;
-  }
-
-  public void goBack() {
-    fragmentNavigator.popBackStack();
+    this.bottomNavigationNavigator = bottomNavigationNavigator;
   }
 
   public void goToHome() {
-    fragmentNavigator.navigateToCleaningBackStack(
-        HomeFragment.newInstance(defaultStore, defaultTheme), true);
+    bottomNavigationNavigator.navigateToHome();
   }
 
   public void popViewWithResult(int requestCode, boolean success) {

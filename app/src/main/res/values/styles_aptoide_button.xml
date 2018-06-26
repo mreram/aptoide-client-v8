@@ -33,9 +33,22 @@
     <item name="android:textColor">@color/grey_fog_light</item>
   </style>
 
+  <style name="Aptoide.Button.Ghost.Grey">
+    <item name="android:background">@drawable/btn_ghost_theme_grey_fog_light</item>
+    <item name="android:textColor">@color/grey</item>
+  </style>
+
   <style name="Aptoide.Button.S">
     <item name="android:layout_height">@dimen/button_small_height</item>
     <item name="android:textSize">10sp</item>
+  </style>
+
+  <style name="Aptoide.Button.S.Gradient">
+    <item name="android:background">@drawable/aptoide_gradient</item>
+  </style>
+
+  <style name="Aptoide.Button.S.Gradient.Rounded">
+    <item name="android:background">@drawable/aptoide_gradient_rounded</item>
   </style>
 
   <style name="Aptoide.Button.Ghost.S">
@@ -47,7 +60,7 @@
   <style name="Aptoide.Button.Facebook">
     <item name="colorButtonNormal">@color/facebook</item>
     <item name="colorControlHighlight">@color/facebook_highlight</item>
-    <item name="android:drawableLeft">@drawable/com_facebook_button_icon_white</item>
+    <item name="android:drawableLeft">@drawable/f_copy</item>
     <item name="android:text">@string/connect_with_facebook</item>
     <item name="android:contentDescription">@string/com_facebook_loginview_log_in_button_long</item>
   </style>
@@ -61,4 +74,10 @@
     <item name="android:contentDescription">@string/google</item>
   </style>
 
+  <style name="Aptoide.Button.Ghost.GreyFogLight.Google">
+    <item name="android:drawableLeft">@drawable/google_icon_copy</item>
+    <item name="android:text">@string/google</item>
+    <item name="android:textColor">@color/grey_700</item>
+    <item name="android:contentDescription">@string/google</item>
+  </style>
 </resources>

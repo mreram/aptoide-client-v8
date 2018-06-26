@@ -8,18 +8,19 @@ package cm.aptoide.pt.account.view;
 import android.app.Activity;
 import android.net.Uri;
 import cm.aptoide.accountmanager.AptoideAccountManager;
+import cm.aptoide.pt.R;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.FacebookLoginResult;
 import cm.aptoide.pt.account.view.store.ManageStoreFragment;
 import cm.aptoide.pt.account.view.store.ManageStoreViewModel;
 import cm.aptoide.pt.account.view.user.ManageUserFragment;
 import cm.aptoide.pt.account.view.user.ProfileStepTwoFragment;
-import cm.aptoide.pt.dataprovider.model.v7.GetAppMeta;
+import cm.aptoide.pt.home.BottomNavigationNavigator;
+import cm.aptoide.pt.link.CustomTabsHelper;
 import cm.aptoide.pt.navigator.ActivityNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
 import cm.aptoide.pt.navigator.Result;
-import cm.aptoide.pt.share.NotLoggedInShareFragment;
-import cm.aptoide.pt.store.view.home.HomeFragment;
+import cm.aptoide.pt.view.settings.NewAccountFragment;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -37,6 +38,7 @@ import rx.schedulers.Schedulers;
 
 public class AccountNavigator {
 
+  private final BottomNavigationNavigator bottomNavigationNavigator;
   private final FragmentNavigator fragmentNavigator;
   private final AptoideAccountManager accountManager;
   private final ActivityNavigator activityNavigator;
@@ -45,15 +47,15 @@ public class AccountNavigator {
   private final GoogleApiClient client;
   private final PublishRelay<FacebookLoginResult> facebookLoginSubject;
   private final String recoverPasswordUrl;
-  private final String defaultStore;
-  private final String defaultTheme;
   private final AccountAnalytics accountAnalytics;
 
-  public AccountNavigator(FragmentNavigator fragmentNavigator, AptoideAccountManager accountManager,
+  public AccountNavigator(BottomNavigationNavigator bottomNavigationNavigator,
+      FragmentNavigator fragmentNavigator, AptoideAccountManager accountManager,
       ActivityNavigator activityNavigator, LoginManager facebookLoginManager,
       CallbackManager callbackManager, GoogleApiClient client,
-      PublishRelay<FacebookLoginResult> facebookLoginSubject, String defaultStore,
-      String defaultTheme, String recoverPasswordUrl, AccountAnalytics accountAnalytics) {
+      PublishRelay<FacebookLoginResult> facebookLoginSubject, String recoverPasswordUrl,
+      AccountAnalytics accountAnalytics) {
+    this.bottomNavigationNavigator = bottomNavigationNavigator;
     this.fragmentNavigator = fragmentNavigator;
     this.accountManager = accountManager;
     this.activityNavigator = activityNavigator;
@@ -61,8 +63,6 @@ public class AccountNavigator {
     this.callbackManager = callbackManager;
     this.client = client;
     this.facebookLoginSubject = facebookLoginSubject;
-    this.defaultStore = defaultStore;
-    this.defaultTheme = defaultTheme;
     this.recoverPasswordUrl = recoverPasswordUrl;
     this.accountAnalytics = accountAnalytics;
   }
@@ -73,7 +73,7 @@ public class AccountNavigator {
 
   public void navigateToAccountView(AccountAnalytics.AccountOrigins accountOrigins) {
     if (accountManager.isLoggedIn()) {
-      fragmentNavigator.navigateTo(MyAccountFragment.newInstance(), true);
+      fragmentNavigator.navigateTo(NewAccountFragment.newInstance(), true);
     } else {
       accountAnalytics.enterAccountScreen(accountOrigins);
       fragmentNavigator.navigateTo(LoginSignUpFragment.newInstance(false, false, false), true);
@@ -130,19 +130,13 @@ public class AccountNavigator {
         new Result(requestCode, (success ? Activity.RESULT_OK : Activity.RESULT_CANCELED), null));
   }
 
-  public void navigateToNotLoggedInViewForResult(int requestCode, GetAppMeta.App app) {
-    fragmentNavigator.navigateForResult(NotLoggedInShareFragment.newInstance(app), requestCode,
-        false);
-  }
-
   public Observable<Boolean> notLoggedInViewResults(int requestCode) {
     return fragmentNavigator.results(requestCode)
         .map(result -> result.getResultCode() == Activity.RESULT_OK);
   }
 
   public void navigateToHomeView() {
-    fragmentNavigator.navigateToCleaningBackStack(
-        HomeFragment.newInstance(defaultStore, defaultTheme), true);
+    bottomNavigationNavigator.navigateToHome();
   }
 
   public void popView() {
@@ -160,5 +154,17 @@ public class AccountNavigator {
   public void navigateToCreateStoreView() {
     fragmentNavigator.navigateToCleaningBackStack(
         ManageStoreFragment.newInstance(new ManageStoreViewModel(), true), true);
+  }
+
+  public void navigateToTermsAndConditions() {
+    CustomTabsHelper.getInstance()
+        .openInChromeCustomTab(activityNavigator.getActivity()
+            .getString(R.string.all_url_terms_conditions), activityNavigator.getActivity());
+  }
+
+  public void navigateToPrivacyPolicy() {
+    CustomTabsHelper.getInstance()
+        .openInChromeCustomTab(activityNavigator.getActivity()
+            .getString(R.string.all_url_privacy_policy), activityNavigator.getActivity());
   }
 }

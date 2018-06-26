@@ -18,6 +18,11 @@
     <item name="android:fontFamily">sans-serif-medium</item>
   </style>
 
+  <style name="Aptoide.TextView.Regular.L">
+    <item name="android:textSize">19sp</item>
+    <item name="android:lineSpacingExtra">4dp</item>
+  </style>
+
   <style name="Aptoide.TextView.Regular.M">
     <item name="android:textSize">16sp</item>
     <item name="android:lineSpacingExtra">4dp</item>
@@ -53,6 +58,15 @@
     <item name="android:lineSpacingExtra">5dp</item>
   </style>
 
+  <style name="Aptoide.TextView.Medium.XS">
+    <item name="android:textSize">12sp</item>
+    <item name="android:lineSpacingExtra">5dp</item>
+  </style>
+
+  <style name="Aptoide.TextView.Medium.XXS">
+    <item name="android:textSize">10sp</item>
+    <item name="android:lineSpacingExtra">5dp</item>
+  </style>
 
   <!-- Colors-->
   <style name="Aptoide.TextView.Regular.XS.GreyFog">
@@ -68,6 +82,10 @@
   </style>
 
   <style name="Aptoide.TextView.Regular.M.BlackAlpha">
+    <item name="android:textColor">@color/black_87_alpha</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.L.BlackAlpha">
     <item name="android:textColor">@color/black_87_alpha</item>
   </style>
 
@@ -87,6 +105,18 @@
     <item name="android:textColor">@color/grey</item>
   </style>
 
+  <style name="Aptoide.TextView.Regular.XXS.Black">
+    <item name="android:textColor">@color/black</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.XXS.BlackAlpha">
+    <item name="android:textColor">@color/black_87_alpha</item>
+  </style>
+
+  <style name="Aptoide.TextView.Regular.XXS.GreyMedium">
+    <item name="android:textColor">@color/grey_medium</item>
+  </style>
+
   <style name="Aptoide.TextView.Regular.XS.BlackAlpha">
     <item name="android:textColor">@color/black_87_alpha</item>
   </style>
@@ -95,7 +125,19 @@
     <item name="android:textColor">@color/black_87_alpha</item>
   </style>
 
+  <style name="Aptoide.TextView.Regular.S.Black">
+    <item name="android:textColor">@color/black</item>
+  </style>
+
+  <style name="Aptoide.TextView.Medium.XS.BlackAlpha">
+    <item name="android:textColor">@color/black_87_alpha</item>
+  </style>
+
   <style name="Aptoide.TextView.Medium.S.BlackAlpha">
+    <item name="android:textColor">@color/black_87_alpha</item>
+  </style>
+
+  <style name="Aptoide.TextView.Medium.M.BlackAlpha">
     <item name="android:textColor">@color/black_87_alpha</item>
   </style>
 
@@ -107,8 +149,25 @@
     <item name="android:textColor">@color/black</item>
   </style>
 
+  <style name="Aptoide.TextView.Medium.XS.Grey">
+    <item name="android:textColor">@color/grey</item>
+  </style>
+
+  <style name="Aptoide.TextView.Medium.XS.GreyMedium">
+    <item name="android:textColor">@color/grey_medium</item>
+  </style>
+
+  <style name="Aptoide.TextView.Medium.XS.Red700">
+    <item name="android:textColor">@color/red_700</item>
+  </style>
+
   <style name="Aptoide.TextView.Regular.S.Red700">
     <item name="android:textColor">@color/red_700</item>
+  </style>
+
+
+  <style name="Aptoide.TextView.Medium.XXS.Orange">
+    <item name="android:textColor">@color/orange</item>
   </style>
 
   <!-- Text Style -->

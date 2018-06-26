@@ -1,13 +1,14 @@
 package cm.aptoide.pt.search.view;
 
 import android.support.v7.widget.RecyclerView;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.search.model.SearchAdResult;
+import cm.aptoide.pt.search.model.SearchAdResultWrapper;
 import cm.aptoide.pt.search.model.SearchAppResult;
+import cm.aptoide.pt.search.model.SearchAppResultWrapper;
 import cm.aptoide.pt.search.view.item.SearchLoadingViewHolder;
 import cm.aptoide.pt.search.view.item.SearchResultAdViewHolder;
 import cm.aptoide.pt.search.view.item.SearchResultItemView;
@@ -17,23 +18,19 @@ import java.util.List;
 
 public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultItemView> {
 
-  private final PublishRelay<SearchAdResult> onAdClickRelay;
-  private final PublishRelay<SearchAppResult> onItemViewClick;
-  private final PublishRelay<Pair<SearchAppResult, android.view.View>> onOpenPopupMenuClick;
+  private final PublishRelay<SearchAdResultWrapper> onAdClickRelay;
+  private final PublishRelay<SearchAppResultWrapper> onItemViewClick;
   private final List<SearchAdResult> searchAdResults;
   private final List<SearchAppResult> searchResults;
   private boolean adsLoaded = false;
   private boolean isLoadingMore = false;
   private CrashReport crashReport;
 
-  public SearchResultAdapter(PublishRelay<SearchAdResult> onAdClickRelay,
-      PublishRelay<SearchAppResult> onItemViewClick,
-      PublishRelay<Pair<SearchAppResult, View>> onOpenPopupMenuClick,
-      List<SearchAppResult> searchResults, List<SearchAdResult> searchAdResults,
-      CrashReport crashReport) {
+  public SearchResultAdapter(PublishRelay<SearchAdResultWrapper> onAdClickRelay,
+      PublishRelay<SearchAppResultWrapper> onItemViewClick, List<SearchAppResult> searchResults,
+      List<SearchAdResult> searchAdResults, CrashReport crashReport) {
     this.onAdClickRelay = onAdClickRelay;
     this.onItemViewClick = onItemViewClick;
-    this.onOpenPopupMenuClick = onOpenPopupMenuClick;
     this.searchResults = searchResults;
     this.searchAdResults = searchAdResults;
     this.crashReport = crashReport;
@@ -45,7 +42,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultItemVi
 
     switch (viewType) {
       case SearchResultViewHolder.LAYOUT: {
-        return new SearchResultViewHolder(view, onItemViewClick, onOpenPopupMenuClick);
+        return new SearchResultViewHolder(view, onItemViewClick);
       }
 
       case SearchResultAdViewHolder.LAYOUT: {
@@ -61,7 +58,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultItemVi
   @SuppressWarnings("unchecked") @Override
   public void onBindViewHolder(SearchResultItemView holder, int position) {
     try {
-      holder.setup(getItem(position));
+      holder.setup(getItem(position), position);
     } catch (ClassCastException e) {
       crashReport.log(e);
     }

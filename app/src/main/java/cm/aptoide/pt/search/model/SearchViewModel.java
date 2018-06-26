@@ -22,6 +22,7 @@ import org.parceler.Parcel;
 
   List<SearchAppResult> followedStoresSearchAppResults;
   List<SearchAdResult> followedStoresSearchAdResults;
+  private String storeTheme;
 
   public SearchViewModel() {
     this.allStoresSearchAppResults = new LinkedList<>();
@@ -35,7 +36,7 @@ import org.parceler.Parcel;
       List<SearchAppResult> allStoresSearchAppResults,
       List<SearchAdResult> allStoresSearchAdResults,
       List<SearchAppResult> followedStoresSearchAppResults,
-      List<SearchAdResult> followedStoresSearchAdResults) {
+      List<SearchAdResult> followedStoresSearchAdResults, String storeTheme) {
     this.currentQuery = currentQuery;
     this.storeName = storeName;
     this.onlyTrustedApps = onlyTrustedApps;
@@ -45,22 +46,24 @@ import org.parceler.Parcel;
     this.allStoresSearchAdResults = allStoresSearchAdResults;
     this.followedStoresSearchAppResults = followedStoresSearchAppResults;
     this.followedStoresSearchAdResults = followedStoresSearchAdResults;
+    this.storeTheme = storeTheme;
   }
 
   public SearchViewModel(String currentQuery, String storeName, boolean onlyTrustedApps,
       String defaultStoreName) {
     this(currentQuery, storeName, onlyTrustedApps, true, defaultStoreName, new LinkedList<>(),
-        new LinkedList<>(), new LinkedList<>(), new LinkedList<>());
+        new LinkedList<>(), new LinkedList<>(), new LinkedList<>(), "");
   }
 
   public SearchViewModel(String currentQuery, boolean onlyTrustedApps, String defaultStoreName) {
     this(currentQuery, null, onlyTrustedApps, true, defaultStoreName, new LinkedList<>(),
-        new LinkedList<>(), new LinkedList<>(), new LinkedList<>());
+        new LinkedList<>(), new LinkedList<>(), new LinkedList<>(), "");
   }
 
-  public SearchViewModel(String currentQuery, String storeName, String defaultStoreName) {
+  public SearchViewModel(String currentQuery, String storeName, String storeTheme,
+      String defaultStoreName) {
     this(currentQuery, storeName, true, true, defaultStoreName, new LinkedList<>(),
-        new LinkedList<>(), new LinkedList<>(), new LinkedList<>());
+        new LinkedList<>(), new LinkedList<>(), new LinkedList<>(), storeTheme);
   }
 
   @Override public List<SearchAppResult> getFollowedStoresSearchAppResults() {
@@ -81,6 +84,10 @@ import org.parceler.Parcel;
 
   public String getDefaultStoreName() {
     return defaultStoreName;
+  }
+
+  @Override public String getStoreTheme() {
+    return storeTheme;
   }
 
   @Override public boolean isOnlyTrustedApps() {

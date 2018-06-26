@@ -24,7 +24,7 @@ import cm.aptoide.pt.account.ErrorsMapper;
 import cm.aptoide.pt.account.view.AccountErrorMapper;
 import cm.aptoide.pt.account.view.AccountNavigator;
 import cm.aptoide.pt.account.view.GooglePlayServicesFragment;
-import cm.aptoide.pt.analytics.ScreenTagHistory;
+import cm.aptoide.analytics.implementation.navigation.ScreenTagHistory;
 import cm.aptoide.pt.crashreports.CrashReport;
 import cm.aptoide.pt.navigator.ActivityResultNavigator;
 import cm.aptoide.pt.navigator.FragmentNavigator;
@@ -371,11 +371,11 @@ public class PaymentLoginFragment extends GooglePlayServicesFragment implements 
   private void togglePasswordVisibility(boolean showPassword) {
     if (showPassword) {
       passwordEditText.setTransformationMethod(null);
-      passwordShowHideToggle.setBackgroundResource(R.drawable.icon_open_eye);
+      passwordShowHideToggle.setBackgroundResource(R.drawable.ic_open_eye);
       passwordVisible = true;
     } else {
       passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
-      passwordShowHideToggle.setBackgroundResource(R.drawable.icon_closed_eye);
+      passwordShowHideToggle.setBackgroundResource(R.drawable.ic_closed_eye);
       passwordVisible = false;
     }
   }

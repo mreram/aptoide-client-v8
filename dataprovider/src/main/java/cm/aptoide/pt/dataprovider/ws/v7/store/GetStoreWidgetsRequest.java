@@ -11,6 +11,7 @@ import android.net.ConnectivityManager;
 import android.view.WindowManager;
 import cm.aptoide.pt.dataprovider.interfaces.TokenInvalidator;
 import cm.aptoide.pt.dataprovider.model.v7.GetStoreWidgets;
+import cm.aptoide.pt.dataprovider.model.v7.Type;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v2.aptwords.AdsApplicationVersionCodeProvider;
 import cm.aptoide.pt.dataprovider.ws.v7.BaseBody;
@@ -19,6 +20,7 @@ import cm.aptoide.pt.dataprovider.ws.v7.BaseRequestWithStore;
 import cm.aptoide.pt.dataprovider.ws.v7.Endless;
 import cm.aptoide.pt.dataprovider.ws.v7.V7Url;
 import cm.aptoide.pt.dataprovider.ws.v7.WSWidgetsUtils;
+import java.util.Collections;
 import java.util.List;
 import okhttp3.OkHttpClient;
 import retrofit2.Converter;
@@ -46,7 +48,7 @@ public class GetStoreWidgetsRequest
   private final WSWidgetsUtils widgetsUtils;
   private boolean bypassServerCache;
 
-  private GetStoreWidgetsRequest(String url, Body body, BodyInterceptor<BaseBody> bodyInterceptor,
+  public GetStoreWidgetsRequest(String url, Body body, BodyInterceptor<BaseBody> bodyInterceptor,
       OkHttpClient httpClient, Converter.Factory converterFactory,
       TokenInvalidator tokenInvalidator, SharedPreferences sharedPreferences,
       StoreCredentials storeCredentials, String clientUniqueId,
@@ -134,7 +136,8 @@ public class GetStoreWidgetsRequest
             clientUniqueId, isGooglePlayServicesAvailable, partnerId, accountMature,
             ((BodyInterceptor<BaseBody>) bodyInterceptor), getHttpClient(), converterFactory,
             filters, getTokenInvalidator(), sharedPreferences, resources, windowManager,
-            connectivityManager, versionCodeProvider, bypassServerCache))
+            connectivityManager, versionCodeProvider, bypassServerCache,
+            Type.ADS.getPerLineCount(resources, windowManager), Collections.emptyList()))
         .toList()
         .flatMapIterable(wsWidgets -> getStoreWidgets.getDataList()
             .getList())
@@ -155,6 +158,12 @@ public class GetStoreWidgetsRequest
       super(storeCredentials);
       this.widgetsArgs = widgetsArgs;
       this.limit = 5;
+    }
+
+    public Body(StoreCredentials storeCredentials, WidgetsArgs widgetsArgs, int limit) {
+      super(storeCredentials);
+      this.widgetsArgs = widgetsArgs;
+      this.limit = limit;
     }
 
     public Body(StoreCredentials storeCredentials, WidgetsArgs widgetsArgs,

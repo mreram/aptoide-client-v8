@@ -21,6 +21,7 @@ import cm.aptoide.pt.dataprovider.model.v7.store.GetHomeMeta;
 import cm.aptoide.pt.dataprovider.ws.BodyInterceptor;
 import cm.aptoide.pt.dataprovider.ws.v2.aptwords.AdsApplicationVersionCodeProvider;
 import cm.aptoide.pt.dataprovider.ws.v2.aptwords.GetAdsRequest;
+import cm.aptoide.pt.dataprovider.ws.v7.home.GetSocialRecommendsRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetHomeMetaRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetMyStoreListRequest;
 import cm.aptoide.pt.dataprovider.ws.v7.store.GetMyStoreMetaRequest;
@@ -48,8 +49,8 @@ import rx.schedulers.Schedulers;
       Converter.Factory converterFactory, String q, TokenInvalidator tokenInvalidator,
       SharedPreferences sharedPreferences, Resources resources, WindowManager windowManager,
       ConnectivityManager connectivityManager,
-      AdsApplicationVersionCodeProvider versionCodeProvider, boolean bypassServerCache) {
-
+      AdsApplicationVersionCodeProvider versionCodeProvider, boolean bypassServerCache, int limit,
+      List<String> packageNames) {
     if (wsWidget.getType() != null) {
 
       String url = null;
@@ -88,14 +89,22 @@ import rx.schedulers.Schedulers;
 
         case ADS:
           return GetAdsRequest.ofHomepage(clientUniqueId, googlePlayServicesAvailable, oemid,
-              mature, httpClient, converterFactory, q, sharedPreferences, resources, windowManager,
-              connectivityManager, versionCodeProvider)
-              .observe(refresh)
+              mature, httpClient, converterFactory, q, sharedPreferences, resources,
+              connectivityManager, versionCodeProvider, limit)
+              .observe(bypassCache)
               .observeOn(Schedulers.io())
               .doOnNext(obj -> wsWidget.setViewObject(obj))
               .onErrorResumeNext(throwable -> Observable.empty())
               .map(listApps -> wsWidget);
 
+        case APPCOINS_ADS:
+          return new GetAppCoinsAdsRequest(new GetAppCoinsAdsRequest.Body(0, limit), httpClient,
+              converterFactory, bodyInterceptor, tokenInvalidator, sharedPreferences).observe(
+              bypassCache, bypassServerCache)
+              .observeOn(Schedulers.io())
+              .doOnNext(obj -> wsWidget.setViewObject(obj))
+              .onErrorResumeNext(throwable -> Observable.empty())
+              .map(listAppCoinsRewardApps -> wsWidget);
         case HOME_META:
           return GetHomeMetaRequest.ofAction(url, storeCredentials, bodyInterceptor, httpClient,
               converterFactory, tokenInvalidator, sharedPreferences)
@@ -189,7 +198,14 @@ import rx.schedulers.Schedulers;
               .doOnNext(obj -> wsWidget.setViewObject(obj))
               .onErrorResumeNext(throwable -> Observable.empty())
               .map(listApps -> wsWidget);
-
+        case TIMELINE_CARD:
+          return GetSocialRecommendsRequest.ofAction(url, bodyInterceptor, httpClient,
+              converterFactory, tokenInvalidator, sharedPreferences, packageNames)
+              .observe(bypassCache, bypassServerCache)
+              .observeOn(Schedulers.io())
+              .doOnNext(obj -> wsWidget.setViewObject(obj))
+              .onErrorResumeNext(throwable -> Observable.empty())
+              .map(recommends -> wsWidget);
         default:
           // In case a known enum is not implemented
           //countDownLatch.countDown();

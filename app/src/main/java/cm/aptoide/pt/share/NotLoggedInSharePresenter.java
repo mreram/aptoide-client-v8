@@ -1,6 +1,5 @@
 package cm.aptoide.pt.share;
 
-import android.content.SharedPreferences;
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.account.AccountAnalytics;
 import cm.aptoide.pt.account.FacebookSignUpAdapter;
@@ -19,7 +18,6 @@ public class NotLoggedInSharePresenter implements Presenter {
 
   private static final int RESOLVE_GOOGLE_CREDENTIALS_REQUEST_CODE = 5;
   private final NotLoggedInShareView view;
-  private final SharedPreferences sharedPreferences;
   private final CrashReport crashReport;
   private final AptoideAccountManager accountManager;
   private final AccountNavigator accountNavigator;
@@ -28,14 +26,14 @@ public class NotLoggedInSharePresenter implements Presenter {
   private final int requestCode;
   private final ThrowableToStringMapper errorMapper;
   private final NotLoggedInShareAnalytics analytics;
+  private final String packageName;
 
-  public NotLoggedInSharePresenter(NotLoggedInShareView view, SharedPreferences sharedPreferences,
-      CrashReport crashReport, AptoideAccountManager accountManager,
-      AccountNavigator accountNavigator, Collection<String> permissions,
-      Collection<String> requiredPermissions, int requestCode, ThrowableToStringMapper errorMapper,
-      NotLoggedInShareAnalytics analytics) {
+  public NotLoggedInSharePresenter(NotLoggedInShareView view, CrashReport crashReport,
+      AptoideAccountManager accountManager, AccountNavigator accountNavigator,
+      Collection<String> permissions, Collection<String> requiredPermissions, int requestCode,
+      ThrowableToStringMapper errorMapper, NotLoggedInShareAnalytics analytics,
+      String packageName) {
     this.view = view;
-    this.sharedPreferences = sharedPreferences;
     this.crashReport = crashReport;
     this.accountManager = accountManager;
     this.accountNavigator = accountNavigator;
@@ -44,6 +42,7 @@ public class NotLoggedInSharePresenter implements Presenter {
     this.requestCode = requestCode;
     this.errorMapper = errorMapper;
     this.analytics = analytics;
+    this.packageName = packageName;
   }
 
   @Override public void present() {
@@ -56,20 +55,8 @@ public class NotLoggedInSharePresenter implements Presenter {
     handleFacebookSignInWithRequiredPermissionsEvent();
 
     handleCloseEvent();
-    handleFakeToolbarEvent();
-    handleFakeTimelineEvent();
     handleBackEvent();
     handleOutsideEvent();
-  }
-
-  private void handleFakeToolbarEvent() {
-    view.getLifecycle()
-        .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
-        .flatMap(viewCreated -> view.getFakeToolbarClick()
-            .doOnNext(click -> analytics.sendTapOnFakeToolbar()))
-        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> {
-        }, throwable -> crashReport.log(throwable));
   }
 
   private void handleOutsideEvent() {
@@ -77,16 +64,6 @@ public class NotLoggedInSharePresenter implements Presenter {
         .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
         .flatMap(viewCreated -> view.getOutsideClick()
             .doOnNext(click -> analytics.sendTapOutside()))
-        .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
-        .subscribe(__ -> {
-        }, throwable -> crashReport.log(throwable));
-  }
-
-  private void handleFakeTimelineEvent() {
-    view.getLifecycle()
-        .filter(lifecycleEvent -> lifecycleEvent.equals(View.LifecycleEvent.CREATE))
-        .flatMap(viewCreated -> view.getFakeTimelineClick()
-            .doOnNext(click -> analytics.sendTapOnFakeTimeline()))
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
         .subscribe(__ -> {
         }, throwable -> crashReport.log(throwable));
@@ -121,7 +98,6 @@ public class NotLoggedInSharePresenter implements Presenter {
         .flatMap(__ -> view.googleSignUpEvent())
         .doOnNext(event -> {
           view.showLoading();
-          analytics.sendGoogleLoginButtonPressed();
         })
         .flatMapSingle(event -> accountNavigator.navigateToGoogleSignUpForResult(
             RESOLVE_GOOGLE_CREDENTIALS_REQUEST_CODE))
@@ -148,12 +124,14 @@ public class NotLoggedInSharePresenter implements Presenter {
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnCompleted(() -> {
                   analytics.loginSuccess();
+                  analytics.sendGoogleLoginResultEvent(packageName, "success");
                   accountNavigator.popViewWithResult(requestCode, true);
                 })
                 .doOnTerminate(() -> view.hideLoading())
                 .doOnError(throwable -> {
                   view.showError(errorMapper.map(throwable));
                   crashReport.log(throwable);
+                  analytics.sendGoogleLoginResultEvent(packageName, "fail");
                   analytics.sendSignUpErrorEvent(AccountAnalytics.LoginMethod.GOOGLE, throwable);
                 }))
             .retry())
@@ -168,7 +146,6 @@ public class NotLoggedInSharePresenter implements Presenter {
         .flatMap(__ -> view.facebookSignUpEvent())
         .doOnNext(event -> {
           view.showLoading();
-          analytics.sendFacebookLoginButtonPressed();
           accountNavigator.navigateToFacebookSignUpForResult(permissions);
         })
         .compose(view.bindUntilEvent(View.LifecycleEvent.DESTROY))
@@ -188,10 +165,12 @@ public class NotLoggedInSharePresenter implements Presenter {
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnCompleted(() -> {
                   analytics.loginSuccess();
+                  analytics.sendFacebookLoginButtonPressed(packageName, "success");
                   accountNavigator.popViewWithResult(requestCode, true);
                 })
                 .doOnTerminate(() -> view.hideLoading())
                 .doOnError(throwable -> {
+                  analytics.sendFacebookLoginButtonPressed(packageName, "fail");
                   if (throwable instanceof FacebookSignUpException
                       && ((FacebookSignUpException) throwable).getCode()
                       == FacebookSignUpException.MISSING_REQUIRED_PERMISSIONS) {

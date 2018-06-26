@@ -76,7 +76,7 @@ import rx.functions.Action0;
 
       if (forceShowRationale || ActivityCompat.shouldShowRequestPermissionRationale(this,
           Manifest.permission.GET_ACCOUNTS)) {
-        Logger.v(TAG, "showing rationale and requesting permission to access accounts");
+        Logger.getInstance().v(TAG, "showing rationale and requesting permission to access accounts");
 
         showMessageOKCancel(R.string.access_to_get_accounts_rationale,
             new SimpleSubscriber<GenericDialogs.EResponse>() {
@@ -100,10 +100,10 @@ import rx.functions.Action0;
 
       ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.GET_ACCOUNTS },
           ACCESS_TO_ACCOUNTS_REQUEST_ID);
-      Logger.v(TAG, "requesting permission to access accounts");
+      Logger.getInstance().v(TAG, "requesting permission to access accounts");
       return;
     }
-    Logger.v(TAG, "already has permission to access accounts");
+    Logger.getInstance().v(TAG, "already has permission to access accounts");
     if (toRunWhenAccessIsGranted != null) {
       toRunWhenAccessIsGranted.call();
     }
@@ -118,7 +118,7 @@ import rx.functions.Action0;
       this.toRunWhenAccessToContactsIsDenied = toRunWhenAccessIsDenied;
 
       if (forceShowRationale) {
-        Logger.v(TAG, "showing rationale and requesting permission to access accounts");
+        Logger.getInstance().v(TAG, "showing rationale and requesting permission to access accounts");
 
         showMessageOKCancel(R.string.access_to_get_accounts_rationale,
             new SimpleSubscriber<GenericDialogs.EResponse>() {
@@ -142,10 +142,10 @@ import rx.functions.Action0;
 
       ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.READ_CONTACTS },
           PERMISSIONS_REQUEST_READ_CONTACTS);
-      Logger.v(TAG, "requesting permission to access accounts");
+      Logger.getInstance().v(TAG, "requesting permission to access accounts");
       return;
     }
-    Logger.v(TAG, "already has permission to access accounts");
+    Logger.getInstance().v(TAG, "already has permission to access accounts");
     if (toRunWhenAccessIsGranted != null) {
       toRunWhenAccessIsGranted.call();
     }
@@ -153,26 +153,12 @@ import rx.functions.Action0;
 
   @Override public void requestDownloadAccess(@Nullable Action0 toRunWhenAccessIsGranted,
       @Nullable Action0 toRunWhenAccessIsDenied) {
-    int message = R.string.general_downloads_dialog_no_download_rule_message;
+    int message;
 
     if ((AptoideUtils.SystemU.getConnectionType(connectivityManager)
-        .equals("mobile") && !ManagerPreferences.getGeneralDownloadsMobile(sharedPreferences)) || (
-        AptoideUtils.SystemU.getConnectionType(connectivityManager)
-            .equals("wifi")
-            && !ManagerPreferences.getGeneralDownloadsWifi(sharedPreferences))) {
-      if ((AptoideUtils.SystemU.getConnectionType(connectivityManager)
-          .equals("wifi") || AptoideUtils.SystemU.getConnectionType(connectivityManager)
-          .equals("mobile"))
-          && !ManagerPreferences.getGeneralDownloadsWifi(sharedPreferences)
-          && !ManagerPreferences.getGeneralDownloadsMobile(sharedPreferences)) {
-        message = R.string.general_downloads_dialog_no_download_rule_message;
-      } else if (AptoideUtils.SystemU.getConnectionType(connectivityManager)
-          .equals("wifi") && !ManagerPreferences.getGeneralDownloadsWifi(sharedPreferences)) {
-        message = R.string.general_downloads_dialog_only_mobile_message;
-      } else if (AptoideUtils.SystemU.getConnectionType(connectivityManager)
-          .equals("mobile") && !ManagerPreferences.getGeneralDownloadsMobile(sharedPreferences)) {
-        message = R.string.general_downloads_dialog_only_wifi_message;
-      }
+        .equals("mobile") && !ManagerPreferences.getDownloadsWifiOnly(sharedPreferences))) {
+
+      message = R.string.general_downloads_dialog_only_wifi_message;
 
       showMessageOKCancel(message, new SimpleSubscriber<GenericDialogs.EResponse>() {
 
@@ -203,7 +189,7 @@ import rx.functions.Action0;
       this.toRunWhenAccessToFileSystemIsDenied = toRunWhenAccessIsDenied;
 
       if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
-        Logger.v(TAG, "showing rationale and requesting permission to access camera");
+        Logger.getInstance().v(TAG, "showing rationale and requesting permission to access camera");
 
         showMessageOKCancel(R.string.camera_access_permission_request_message,
             new SimpleSubscriber<GenericDialogs.EResponse>() {
@@ -228,10 +214,10 @@ import rx.functions.Action0;
       ActivityCompat.requestPermissions(PermissionServiceActivity.this, new String[] {
           Manifest.permission.CAMERA
       }, PERMISSIONS_REQUEST_ACCESS_CAMERA);
-      Logger.v(TAG, "requesting permission to access camera");
+      Logger.getInstance().v(TAG, "requesting permission to access camera");
       return;
     }
-    Logger.v(TAG, "already has permission to access camera");
+    Logger.getInstance().v(TAG, "already has permission to access camera");
     if (toRunWhenAccessIsGranted != null) {
       toRunWhenAccessIsGranted.call();
     }
@@ -263,7 +249,7 @@ import rx.functions.Action0;
 
       if (forceShowRationale || ActivityCompat.shouldShowRequestPermissionRationale(this,
           Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-        Logger.v(TAG, "showing rationale and requesting permission to access external storage");
+        Logger.getInstance().v(TAG, "showing rationale and requesting permission to access external storage");
 
         // TODO: 19/07/16 improve this rationale messages
         showMessageOKCancel(rationaleMessage, new SimpleSubscriber<GenericDialogs.EResponse>() {
@@ -289,10 +275,10 @@ import rx.functions.Action0;
       ActivityCompat.requestPermissions(this, new String[] {
           Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
       }, ACCESS_TO_EXTERNAL_FS_REQUEST_ID);
-      Logger.v(TAG, "requesting permission to access external storage");
+      Logger.getInstance().v(TAG, "requesting permission to access external storage");
       return;
     }
-    Logger.v(TAG, "already has permission to access external storage");
+    Logger.getInstance().v(TAG, "already has permission to access external storage");
     if (toRunWhenAccessIsGranted != null) {
       toRunWhenAccessIsGranted.call();
     }
@@ -321,7 +307,7 @@ import rx.functions.Action0;
     switch (requestCode) {
       case PERMISSIONS_REQUEST_ACCESS_CAMERA:
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          Logger.v(TAG, "access to camera was granted");
+          Logger.getInstance().v(TAG, "access to camera was granted");
           if (toRunWhenAccessToContactsIsGranted != null) {
             toRunWhenAccessToContactsIsGranted.call();
           }
@@ -334,7 +320,7 @@ import rx.functions.Action0;
 
       case PERMISSIONS_REQUEST_READ_CONTACTS:
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          Logger.v(TAG, "access to read and write to external storage was granted");
+          Logger.getInstance().v(TAG, "access to read and write to external storage was granted");
           if (toRunWhenAccessToContactsIsGranted != null) {
             toRunWhenAccessToContactsIsGranted.call();
           }
@@ -347,7 +333,7 @@ import rx.functions.Action0;
 
       case ACCESS_TO_EXTERNAL_FS_REQUEST_ID:
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          Logger.v(TAG, "access to read and write to external storage was granted");
+          Logger.getInstance().v(TAG, "access to read and write to external storage was granted");
           if (toRunWhenAccessToFileSystemIsGranted != null) {
             toRunWhenAccessToFileSystemIsGranted.call();
           }
@@ -362,7 +348,7 @@ import rx.functions.Action0;
 
       case ACCESS_TO_ACCOUNTS_REQUEST_ID:
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-          Logger.v(TAG, "access to get accounts was granted");
+          Logger.getInstance().v(TAG, "access to get accounts was granted");
           if (toRunWhenAccessToAccountsIsGranted != null) {
             toRunWhenAccessToAccountsIsGranted.call();
           }
