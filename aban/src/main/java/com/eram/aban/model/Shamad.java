@@ -1,6 +1,6 @@
 package com.eram.aban.model;
 
-public class Shamed {
+public class Shamad {
 
 
     public String success;

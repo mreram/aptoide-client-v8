@@ -1,7 +1,7 @@
 package com.eram.aban;
 
 
-import com.eram.aban.model.Shamed;
+import com.eram.aban.model.Shamad;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -9,7 +9,6 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 import retrofit2.http.GET;
-import retrofit2.http.Path;
 import retrofit2.http.Query;
 import rx.Observable;
 
@@ -33,13 +32,13 @@ public class AbanRepository {
         abanInterface = retrofit.create(AbanInterface.class);
     }
 
-    public Observable<Shamed> getShamedInfo(String packageName) {
+    public Observable<Shamad> getShamedInfo(String packageName) {
         return abanInterface.getShamed(packageName);
     }
 
     interface AbanInterface {
         @GET("shamed")
-        Observable<Shamed> getShamed(@Query("package_name") String packageName);
+        Observable<Shamad> getShamed(@Query("package_name") String packageName);
     }
 
 
