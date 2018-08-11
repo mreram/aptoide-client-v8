@@ -31,7 +31,7 @@ dependencies {
     compile "com.android.support:appcompat-v7:$SUPPORT_LIB_VERSION"
     compile "com.squareup.retrofit2:retrofit:${RETROFIT_VERSION}"
     compile "com.squareup.retrofit2:adapter-rxjava:${RETROFIT_VERSION}"
-    compile "com.squareup.retrofit2:converter-jackson:${RETROFIT_VERSION}"
+    compile 'com.squareup.retrofit2:converter-gson:2.3.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.4.1'
 
     testCompile 'junit:junit:4.12'
