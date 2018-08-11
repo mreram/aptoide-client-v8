@@ -6,7 +6,6 @@ android {
 
     defaultConfig {
         minSdkVersion
-        proguardFiles "proguard-rules.pro"
     }
 
 
@@ -16,6 +15,7 @@ android {
             buildConfigField "String", "base_url", project.ABAN_APTOID_URL
         }
         release {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             buildConfigField "String", "base_url", project.ABAN_APTOID_URL
 
             minifyEnabled false

@@ -17,6 +17,7 @@
 #}
 
 -keep class cm.aptoide.** {*;}
+-keep class com.eram.aban.** {*;}
 -keep class android.support.v7.appcompat.** { *; }
 -keep class android.support.v7.widget.SearchView { *; }
 

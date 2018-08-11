@@ -21,9 +21,9 @@
 #-renamesourcefileattribute SourceFile
 
 # Retrofit 2.X
-## https://square.github.io/retrofit/ ##
--keep class aban.** {*;}
+## https://square.github.iho/retrofit/ ##
 
+-dontnote okhttp3.**, okio.**, retrofit2.**
 -dontwarn retrofit2.**
 -keep class retrofit2.** { *; }
 -keepattributes Signature
@@ -47,3 +47,12 @@
  -keep class org.codehaus.** { *; }
  -keepclassmembers public final enum org.codehaus.jackson.annotate.JsonAutoDetect$Visibility {
  public static final org.codehaus.jackson.annotate.JsonAutoDetect$Visibility *; }
+
+-keep class com.eram.aban.** { *; }
+-keep class com.eram.aban { *; }
+-keep public class com.google.gson
+
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+-keep class com.google.gson.examples.android.model.** { *; }
