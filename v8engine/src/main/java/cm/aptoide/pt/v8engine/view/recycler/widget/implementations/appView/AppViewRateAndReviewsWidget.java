@@ -6,8 +6,6 @@
 package cm.aptoide.pt.v8engine.view.recycler.widget.implementations.appView;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.LinearLayoutManager;
@@ -36,6 +34,7 @@ import cm.aptoide.pt.preferences.secure.SecurePreferencesImplementation;
 import cm.aptoide.pt.utils.AptoideUtils;
 import cm.aptoide.pt.v8engine.R;
 import cm.aptoide.pt.v8engine.V8Engine;
+import cm.aptoide.pt.v8engine.fragment.implementations.SocialFragment;
 import cm.aptoide.pt.v8engine.interfaces.FragmentShower;
 import cm.aptoide.pt.v8engine.util.DialogUtils;
 import cm.aptoide.pt.v8engine.util.LinearLayoutManagerWithSmoothScroller;
@@ -162,9 +161,9 @@ public class AppViewRateAndReviewsWidget
 
 
         Action1<Void> saramadOnClickListener = __ -> {
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://logo.saramad.ir/verify.aspx?CodeShamad=" + app.getShamedUrl()));
-            getContext().startActivity(browserIntent);
-
+            fragmentShower.pushFragmentV4(
+                    SocialFragment.newInstance("http://logo.saramad.ir/verify.aspx?CodeShamad=" + app.getShamedUrl()
+                                                ,"شامد"));
         };
         compositeSubscription.add(RxView.clicks(saramadLayout).subscribe(saramadOnClickListener, handleError));
 
