@@ -44,6 +44,7 @@ dependencies {
   //
 
   compile project(path: ':utils', configuration: 'release')
+  compile project(path: ':aban')
   compile project(path: ':aptoidepreferences', configuration: 'release')
 
   //

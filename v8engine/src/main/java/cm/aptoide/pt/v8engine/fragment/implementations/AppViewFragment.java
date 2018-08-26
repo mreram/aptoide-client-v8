@@ -518,7 +518,7 @@ public class AppViewFragment extends AptoideBaseFragment<BaseAdapter>
 
     private Observable<GetApp> getShamed(GetApp getApp) {
         abanRepository.getShamedInfo(packageName).subscribe(shamed -> {
-                    getApp.getNodes().getMeta().getData().setShamedUrl(shamed.data.shamed_code);
+                    getApp.getNodes().getMeta().getData().setShamad(shamed);
                 },
                 Throwable::printStackTrace);
         return Observable.just(getApp);

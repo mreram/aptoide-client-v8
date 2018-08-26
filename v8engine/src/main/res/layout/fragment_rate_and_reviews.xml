@@ -98,7 +98,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             android:orientation="horizontal"
             >
 
@@ -135,7 +135,7 @@
             android:lineSpacingMultiplier="0.9"
             android:maxLines="1"
             android:textColor="@color/white"
-            android:textSize="42sp"
+            android:textSize="40sp"
             tools:text="4.2"
             />
 

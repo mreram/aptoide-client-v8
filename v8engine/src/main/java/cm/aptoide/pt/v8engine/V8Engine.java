@@ -63,6 +63,7 @@ import lombok.Getter;
 import lombok.Setter;
 import rx.Observable;
 import rx.schedulers.Schedulers;
+import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 /**
  * Created by neuro on 14-04-2016.
@@ -266,6 +267,13 @@ public abstract class V8Engine extends DataProvider {
 
     AptoideAccountManager.setAnalytics(new AccountAnalytcsImp());
     Logger.d(TAG, "onCreate took " + (System.currentTimeMillis() - l) + " millis.");
+
+    //font
+    CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
+            .setDefaultFontPath("fonts/DroidSerif-Regular.ttf")
+            .setFontAttrId(R.attr.fontPath)
+            .build()
+    );
   }
 
   @Override protected TokenInvalidator getTokenInvalidator() {

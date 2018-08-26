@@ -7,6 +7,7 @@ package cm.aptoide.pt.v8engine.fragment.implementations;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
@@ -23,6 +24,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
 import cm.aptoide.accountmanager.AptoideAccountManager;
 import cm.aptoide.pt.annotation.Partners;
 import cm.aptoide.pt.dataprovider.DataProvider;
@@ -159,12 +162,19 @@ public class StoreFragment extends BasePagerToolbarFragment {
     super.onDestroyView();
   }
 
+
+
   @Override protected void setupViewPager() {
     super.setupViewPager();
     pagerSlidingTabStrip = (PagerSlidingTabStrip) getView().findViewById(R.id.tabs);
 
     if (pagerSlidingTabStrip != null) {
-      pagerSlidingTabStrip.setViewPager(viewPager);
+
+        Typeface fontTypeFace = Typeface.createFromAsset(getContext().getAssets(),
+                "fonts/DroidSerif-Regular.ttf");
+
+        pagerSlidingTabStrip.setViewPager(viewPager);
+        pagerSlidingTabStrip.setTypeface(fontTypeFace, 0);
     }
 
     /*

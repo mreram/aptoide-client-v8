@@ -7,6 +7,8 @@ package cm.aptoide.pt.model.v7;
 
 import cm.aptoide.pt.model.v7.listapp.File;
 import cm.aptoide.pt.model.v7.store.Store;
+
+import com.eram.aban.model.Shamad;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Data;
@@ -37,7 +39,7 @@ import lombok.EqualsAndHashCode;
     private Stats stats;
     private Obb obb;
     private Pay pay;
-    private String shamedUrl;
+    private Shamad shamad;
 
     public boolean isPaid() {
       return (pay != null && pay.getPrice() != null && pay.getPrice().floatValue() > 0.0f);

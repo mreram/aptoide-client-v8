@@ -5,6 +5,7 @@
 
 package cm.aptoide.pt.v8engine.activity;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import cm.aptoide.pt.v8engine.presenter.Presenter;
@@ -14,6 +15,7 @@ import com.trello.rxlifecycle.RxLifecycle;
 import com.trello.rxlifecycle.android.ActivityEvent;
 import com.trello.rxlifecycle.components.support.RxAppCompatActivity;
 import rx.Observable;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 /**
  * Created by marcelobenites on 8/19/16.
@@ -38,6 +40,12 @@ public abstract class ActivityView extends RxAppCompatActivity implements View {
     this.presenter = presenter;
     this.presenter.present();
   }
+
+  @Override
+  protected void attachBaseContext(Context newBase) {
+    super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+  }
+
 
   @NonNull private LifecycleEvent convertToEvent(ActivityEvent event) {
     switch (event) {

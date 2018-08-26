@@ -68,14 +68,14 @@ public class WSWidgetsUtils {
               .onErrorResumeNext(throwable -> Observable.empty())
               .map(listApps -> wsWidget);
 
-        case ADS:
-          return GetAdsRequest.ofHomepage(aptoideClientUuid, googlePlayServicesAvailable, oemid,
-              mature, Application.getConfiguration().numberOfAdsRowOnHomepage())
-              .observe()
-              .observeOn(Schedulers.io())
-              .doOnNext(wsWidget::setViewObject)
-              .onErrorResumeNext(throwable -> Observable.empty())
-              .map(listApps -> wsWidget);
+//        case ADS:
+//          return GetAdsRequest.ofHomepage(aptoideClientUuid, googlePlayServicesAvailable, oemid,
+//              mature, Application.getConfiguration().numberOfAdsRowOnHomepage())
+//              .observe()
+//              .observeOn(Schedulers.io())
+//              .doOnNext(wsWidget::setViewObject)
+//              .onErrorResumeNext(throwable -> Observable.empty())
+//              .map(listApps -> wsWidget);
 
         case STORE_META:
           return GetStoreMetaRequest.ofAction(url, storeCredentials, accessToken, aptoideClientUuid)

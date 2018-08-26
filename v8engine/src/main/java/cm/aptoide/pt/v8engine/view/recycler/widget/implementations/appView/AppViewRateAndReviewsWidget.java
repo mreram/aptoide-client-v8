@@ -84,10 +84,11 @@ public class AppViewRateAndReviewsWidget
 
     private String appName;
     private String packageName;
-    private String shamedUrl;
     private String storeName;
     private int usersToVote;
     private TextView emptyReviewTextView;
+
+    private ImageView imgShamad;
 
     public AppViewRateAndReviewsWidget(View itemView) {
         super(itemView);
@@ -103,6 +104,8 @@ public class AppViewRateAndReviewsWidget
         ratingLayout = itemView.findViewById(R.id.rating_layout);
         commentsLayout = itemView.findViewById(R.id.comments_layout);
         saramadLayout = itemView.findViewById(R.id.saramad_layout);
+        imgShamad = (ImageView) itemView.findViewById(R.id.imgShamad);
+
 
         usersVotedTextView = (TextView) itemView.findViewById(R.id.users_voted);
         emptyReviewTextView = (TextView) itemView.findViewById(R.id.empty_review_text);
@@ -125,7 +128,6 @@ public class AppViewRateAndReviewsWidget
 
         appName = app.getName();
         packageName = app.getPackageName();
-        shamedUrl = app.getShamedUrl();
         storeName = app.getStore().getName();
 
         usersToVote = stats.getRating().getTotal();
@@ -162,9 +164,15 @@ public class AppViewRateAndReviewsWidget
 
         Action1<Void> saramadOnClickListener = __ -> {
             fragmentShower.pushFragmentV4(
-                    SocialFragment.newInstance("http://logo.saramad.ir/verify.aspx?CodeShamad=" + app.getShamedUrl()
-                                                ,"شامد"));
+                    SocialFragment.newInstance(app.getShamad().data.shamed_url
+                            , "شامد"));
         };
+
+
+        String shamadCode = app.getShamad() != null ? (app.getShamad().data != null ? app.getShamad().data.shamed_code : "") : "";
+        ImageLoader.with(getContext()).load("http://logo.saramad.ir/logo.aspx?CodeShamad=" + shamadCode, imgShamad);
+
+
         compositeSubscription.add(RxView.clicks(saramadLayout).subscribe(saramadOnClickListener, handleError));
 
         LinearLayoutManagerWithSmoothScroller layoutManager =
